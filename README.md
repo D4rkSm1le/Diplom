@@ -68,14 +68,7 @@ python manage.py runserver
 2. Зарегистрируйтесь или войдите в систему
 3. Начните добавлять треки и создавать плейлисты
 
-## Интеграция с Disgen Music
 
-Для использования функции поиска и добавления треков из Disgen Music:
-
-1. Получите токен доступа в [Disgen Music Developer Console](https://developer.disgen-music.com)
-2. Добавьте токен в файл `.env`:
-```
-DISGEN_MUSIC_TOKEN=your-token-here
 ```
 
 ## Лицензия
