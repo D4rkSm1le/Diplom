@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Настройки - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Настройки профиля</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Изменить имя пользователя</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Информация о профиле</h5>
+                    <div class="mb-3">
+                        <strong>Email:</strong> {{ user.email }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Роль:</strong> 
+                        {% if user.profile.role == 'artist' %}
+                            Артист
+                        {% elif user.is_superuser %}
+                            Администратор
+                        {% else %}
+                            Слушатель
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Дата рождения:</strong> 
+                        {% if user.profile.birth_date %}
+                            {{ user.profile.birth_date|date:"d.m.Y" }}
+                        {% else %}
+                            Не указана
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

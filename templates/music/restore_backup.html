@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Восстановление системы{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Восстановление системы из резервной копии</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>Внимание!</strong> Восстановление системы из резервной копии приведет к полной замене текущих данных. Убедитесь, что у вас есть актуальная резервная копия текущих данных перед продолжением.
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="backup_file" class="form-label">Выберите файл резервной копии</label>
+                    <input type="file" class="form-control" id="backup_file" name="backup_file" accept=".zip" required>
+                </div>
+                <button type="submit" class="btn btn-danger">Восстановить систему</button>
+                <a href="{% url 'music:admin_panel' %}" class="btn btn-secondary">Отмена</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

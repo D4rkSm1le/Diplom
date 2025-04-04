@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Альбомы - Музыкальный сервис{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Альбомы</h1>
+            <a href="{% url 'music:album_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Создать альбом
+            </a>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for album in albums %}
+        <div class="col">
+            <div class="card h-100">
+                {% if album.cover %}
+                <img src="{{ album.cover.url }}" class="card-img-top" alt="{{ album.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="fas fa-music fa-3x"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ album.title }}</h5>
+                    <p class="card-text">{{ album.artist }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Треков: {{ album.tracks.count }}<br>
+                            Дата выпуска: {{ album.release_date|date:"d.m.Y" }}
+                        </small>
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'music:album_detail' album.pk %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-info-circle"></i> Подробнее
+                    </a>
+                    {% if user == album.user or user.is_superuser %}
+                    <a href="{% url 'music:album_edit' album.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                Пока нет ни одного альбома. Будьте первым, кто создаст альбом!
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-footer {
+    display: flex;
+    gap: 0.5rem;
+}
+</style>
+{% endblock %} 

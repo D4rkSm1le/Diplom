@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load music_filters %}
 
 {% block title %}{{ playlist.name }} - Музыкальный сервис{% endblock %}
 
@@ -144,6 +147,15 @@
 </div>
 
 <style>
+/* Отступ для списка треков */
+.list-group {
+    margin-bottom: 140px;
+}
+
+.list-group-item:last-child {
+    margin-bottom: 0;
+}
+
 /* Стили плеера */
 #player {
     position: fixed;
@@ -152,7 +164,7 @@
     right: 0;
     background-color: #282828;
     border-top: 1px solid #404040;
-    padding: 8px 0; /* Уменьшаем отступы */
+    padding: 16px 0;
     z-index: 1000;
 }
 
@@ -360,7 +372,7 @@
 }
 
 .tracks-container {
-    margin-bottom: 90px; /* Уменьшаем отступ для плеера */
+    margin-bottom: 140px;
 }
 
 .track-item {
@@ -426,34 +438,45 @@ function setupAudioPlayer() {
 }
 
 function setupControls() {
-    const progressBar = document.getElementById('progressBar');
+    const progressBar = document.querySelector('.progress');
     let isDragging = false;
 
-    // Обработчик для клика по прогресс-бару
-    progressBar.addEventListener('click', function(e) {
-        const rect = this.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-        audioPlayer.currentTime = percent * audioPlayer.duration;
-        updateProgressPosition(percent * 100);
-    });
-
-    // Обработчики для перетаскивания
     progressBar.addEventListener('mousedown', function(e) {
         isDragging = true;
-        document.addEventListener('mousemove', handleDrag);
-        document.addEventListener('mouseup', function() {
-            isDragging = false;
-            document.removeEventListener('mousemove', handleDrag);
-        });
+        updateProgressFromEvent(e);
     });
 
-    function handleDrag(e) {
+    document.addEventListener('mousemove', function(e) {
         if (isDragging) {
-            const rect = progressBar.getBoundingClientRect();
-            let percent = (e.clientX - rect.left) / rect.width;
-            percent = Math.min(Math.max(percent, 0), 1);
-            audioPlayer.currentTime = percent * audioPlayer.duration;
-            updateProgressPosition(percent * 100);
+            updateProgressFromEvent(e);
+            e.preventDefault(); // Предотвращаем выделение текста при перетаскивании
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
+
+    progressBar.addEventListener('click', function(e) {
+        updateProgressFromEvent(e);
+    });
+
+    function updateProgressFromEvent(e) {
+        const rect = progressBar.getBoundingClientRect();
+        const pos = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
+        const newTime = pos * audioPlayer.duration;
+        if (!isNaN(newTime) && isFinite(newTime)) {
+            audioPlayer.currentTime = newTime;
+            updateProgressBar(newTime, audioPlayer.duration);
+        }
+    }
+
+    function updateProgressBar(currentTime, duration) {
+        if (!isDragging && !isNaN(duration) && isFinite(duration) && duration > 0) {
+            const progress = (currentTime / duration) * 100;
+            document.querySelector('.progress-bar').style.width = `${progress}%`;
+            document.getElementById('currentTime').textContent = formatTime(currentTime);
+            document.getElementById('duration').textContent = formatTime(duration);
         }
     }
 

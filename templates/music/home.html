@@ -8,52 +8,58 @@
         <h1 class="mb-4">Добро пожаловать, {{ user.username }}!</h1>
         
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-12">
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h2 class="card-title h4 mb-0">Популярные треки</h2>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h2 class="card-title h4 mb-0">Рейтинг треков</h2>
+                        <div class="btn-group">
+                            <a href="{% url 'music:track_upload' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-upload"></i> Загрузить трек
+                            </a>
+                            <a href="{% url 'music:playlist_create' %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-plus"></i> Создать плейлист
+                            </a>
+                        </div>
                     </div>
                     <div class="card-body">
                         {% if tracks %}
                             <div class="list-group">
                                 {% for track in tracks %}
-                                    <a href="{% url 'music:track_detail' track.pk %}" class="list-group-item list-group-item-action">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <div class="track-details flex-grow-1">
-                                                <div class="track-title" style="font-weight: 500;">{{ track.title }}</div>
-                                                <div class="track-artist" style="color: #b3b3b3; font-size: 0.9em;">{{ track.artist }}</div>
-                                                <div class="play-count" style="color: #b3b3b3; font-size: 0.8em;">
+                                    <div class="list-group-item list-group-item-action track-item" data-track-id="{{ track.pk }}">
+                                        <div class="d-flex w-100 justify-content-between align-items-center" data-track-id="{{ track.pk }}">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3" style="width: 40px; text-align: center;">
+                                                    <span class="h5 mb-0 {% if forloop.counter <= 3 %}text-gold{% else %}text-muted{% endif %}">
+                                                        {{ forloop.counter }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <h5 class="mb-1">{{ track.title }}</h5>
+                                                    <p class="mb-1 text-muted">{{ track.artist }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-primary me-3">
                                                     <i class="fas fa-play"></i> {{ track.play_count }}
+                                                </span>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'music:track_detail' track.pk %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-info-circle"></i>
+                                                    </a>
+                                                    {% if user.is_authenticated %}
+                                                    <button class="btn btn-sm btn-outline-success add-to-playlist-btn" data-track-id="{{ track.pk }}">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
-                                    </a>
+                                    </div>
                                 {% endfor %}
                             </div>
                         {% else %}
-                            <p class="text-muted">Пока нет популярных треков</p>
+                            <p class="text-muted">Пока нет треков</p>
                         {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title h4 mb-0">Быстрые действия</h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'music:track_upload' %}" class="btn btn-primary">
-                                <i class="fas fa-upload"></i> Загрузить трек
-                            </a>
-                            <a href="{% url 'music:playlist_create' %}" class="btn btn-success">
-                                <i class="fas fa-plus"></i> Создать плейлист
-                            </a>
-                            <a href="{% url 'music:track_list' %}" class="btn btn-info">
-                                <i class="fas fa-list"></i> Все треки
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -76,31 +82,83 @@
     {% endif %}
 </div>
 
-<script>
-function incrementPlayCount(trackId) {
-    fetch(`/music/track/${trackId}/increment-play-count/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const playCountElement = document.querySelector(`[data-track-id="${trackId}"] .play-count`);
-        if (playCountElement) {
-            playCountElement.textContent = data.play_count;
-        }
-    });
+<style>
+.list-group-item {
+    transition: background-color 0.2s;
 }
 
-// Добавляем обработчик события ended для аудиоплеера
-document.getElementById('audioPlayer').addEventListener('ended', function() {
-    // Проверяем, что трек не зациклен
-    if (!this.loop && currentTrackId) {
-        incrementPlayCount(currentTrackId, true);
-    }
+.list-group-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.badge {
+    font-size: 0.9rem;
+}
+
+.text-gold {
+    color: #ffd700;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addToPlaylistButtons = document.querySelectorAll('.add-to-playlist-btn');
+    addToPlaylistButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const trackId = this.dataset.trackId;
+            showAddToPlaylistModal(trackId);
+        });
+    });
+    
+    // Обработчик для клика по треку в списке
+    const trackItems = document.querySelectorAll('.list-group-item');
+    trackItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Если клик был по кнопке добавления в плейлист или другим кнопкам, не перенаправляем
+            if (e.target.closest('.add-to-playlist-btn') || e.target.closest('.btn-outline-primary')) {
+                return;
+            }
+            
+            const trackId = this.querySelector('[data-track-id]').dataset.trackId;
+            
+            // Отправляем запрос на увеличение счетчика прослушиваний
+            fetch(`/music/track/${trackId}/increment-play-count/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Успешно увеличен счетчик:", data);
+                
+                if (data.success) {
+                    // Обновляем счетчик прослушиваний на странице
+                    const playCountElement = this.querySelector('.badge');
+                    if (playCountElement) {
+                        playCountElement.innerHTML = `<i class="fas fa-play"></i> ${data.play_count}`;
+                    }
+                    
+                    // Перенаправляем на страницу деталей трека
+                    window.location.href = `/music/tracks/${trackId}/`;
+                }
+            })
+            .catch(error => {
+                console.error("Ошибка при увеличении счетчика:", error);
+                // В случае ошибки все равно перенаправляем на страницу трека
+                window.location.href = `/music/tracks/${trackId}/`;
+            });
+            
+            e.preventDefault();
+        });
+    });
 });
+
+function showAddToPlaylistModal(trackId) {
+    // Здесь должна быть логика открытия модального окна для добавления в плейлист
+    // Этот код будет работать, если у вас уже есть соответствующий модальный компонент
+}
 
 function getCookie(name) {
     let cookieValue = null;
@@ -115,67 +173,6 @@ function getCookie(name) {
         }
     }
     return cookieValue;
-}
-
-function playTrack(url, title, artist, cover, trackId) {
-    const audioPlayer = document.getElementById('audioPlayer');
-    
-    // Если нажали на тот же трек, что сейчас играет
-    if (currentTrackId === trackId) {
-        if (!audioPlayer.paused) {
-            // Если трек играет - ставим на паузу
-            audioPlayer.pause();
-            document.getElementById('playPauseIcon').classList.replace('fa-pause', 'fa-play');
-            const button = document.querySelector(`[data-track-id="${trackId}"] .play-button i`);
-            if (button) {
-                button.classList.replace('fa-pause', 'fa-play');
-            }
-        } else {
-            // Если трек на паузе - возобновляем воспроизведение
-            audioPlayer.play();
-            document.getElementById('playPauseIcon').classList.replace('fa-play', 'fa-pause');
-            const button = document.querySelector(`[data-track-id="${trackId}"] .play-button i`);
-            if (button) {
-                button.classList.replace('fa-play', 'fa-pause');
-            }
-            // Увеличиваем счетчик при возобновлении воспроизведения
-            incrementPlayCount(trackId);
-        }
-    } else {
-        // Если выбран новый трек
-        // Останавливаем текущий трек если он играет
-        if (!audioPlayer.paused) {
-            audioPlayer.pause();
-        }
-        
-        // Обновляем иконки всех кнопок воспроизведения
-        document.querySelectorAll('.play-button i').forEach(icon => {
-            icon.classList.replace('fa-pause', 'fa-play');
-        });
-        
-        // Устанавливаем новый трек
-        audioPlayer.src = url;
-        document.getElementById('playerTitle').textContent = title;
-        document.getElementById('playerArtist').textContent = artist;
-        document.getElementById('playerCover').src = cover;
-        document.getElementById('player').style.display = 'block';
-        
-        // Воспроизводим новый трек
-        audioPlayer.play()
-            .then(() => {
-                document.getElementById('playPauseIcon').classList.replace('fa-play', 'fa-pause');
-                const button = document.querySelector(`[data-track-id="${trackId}"] .play-button i`);
-                if (button) {
-                    button.classList.replace('fa-play', 'fa-pause');
-                }
-                currentTrackId = trackId;
-                // Увеличиваем счетчик при начале воспроизведения
-                incrementPlayCount(trackId);
-            })
-            .catch(error => {
-                console.error('Error playing audio:', error);
-            });
-    }
 }
 </script>
 {% endblock %} 

@@ -1,0 +1,672 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load music_filters %}
+
+{% csrf_token %}
+
+{% block title %}{{ album.title }} - Музыкальный сервис{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                {% if album.cover %}
+                <img src="{{ album.cover.url }}" class="card-img-top" alt="{{ album.title }}">
+                {% else %}
+                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <i class="fas fa-music fa-5x"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h1 class="card-title">{{ album.title }}</h1>
+                    <h2 class="card-subtitle mb-3 text-muted">{{ album.artist }}</h2>
+                    
+                    <p class="card-text">
+                        <strong>Дата выпуска:</strong> {{ album.release_date|date:"d.m.Y" }}
+                    </p>
+                    
+                    {% if album.description %}
+                    <p class="card-text">{{ album.description }}</p>
+                    {% endif %}
+                    
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Добавлен: {{ album.created_at|date:"d.m.Y H:i" }}
+                        </small>
+                    </p>
+                    
+                    {% if user == album.user or user.is_superuser %}
+                    <div class="btn-group w-100">
+                        <a href="{% url 'music:album_edit' album.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </a>
+                        {% if user.is_superuser %}
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash"></i> Удалить
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Треки</h2>
+                    
+                    {% if album.tracks.all %}
+                    <div class="list-group tracks-container">
+                        {% for track in album.tracks.all %}
+                        <div class="track-item list-group-item" 
+                             data-track-id="{{ track.pk }}"
+                             data-audio-url="{{ track.audio_file.url }}"
+                             data-title="{{ track.title }}"
+                             data-artist="{{ track.artist }}"
+                             data-cover="{% if track.cover %}{{ track.cover.url }}{% else %}{% if album.cover %}{{ album.cover.url }}{% else %}https://via.placeholder.com/50{% endif %}{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="play-button me-3">
+                                        <i class="fas fa-play"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">{{ track.title }}</h5>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="play-count me-3">
+                                        <i class="fas fa-play"></i> {{ track.play_count }}
+                                    </span>
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-white" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'music:track_detail' track.pk %}">
+                                                    <i class="fas fa-info-circle"></i> Подробнее
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'music:generate_qr' track.pk %}">
+                                                    <i class="fas fa-qrcode"></i> QR-код
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item add-to-playlist-btn" type="button" data-track-id="{{ track.pk }}">
+                                                    <i class="fas fa-plus"></i> Добавить в плейлист
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        В альбоме пока нет треков.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить альбом "{{ album.title }}"?</p>
+                <p class="text-danger">Это действие нельзя будет отменить.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form action="{% url 'music:album_delete' album.pk %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для добавления в плейлист -->
+<div class="modal fade" id="playlistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить трек в плейлист</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addToPlaylistForm" method="post" action="{% url 'music:add_to_playlist' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="modalTrackId" name="track_id">
+                    <div class="mb-3">
+                        <label for="playlistSelect" class="form-label">Выберите плейлист:</label>
+                        <select class="form-select" id="playlistSelect" name="playlist_id" required>
+                            <option value="">Выберите плейлист...</option>
+                            {% for playlist in user_playlists %}
+                            <option value="{{ playlist.id }}">{{ playlist.name }} ({{ playlist.tracks.count }} треков)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Добавить в плейлист
+                        </button>
+                    </div>
+                </form>
+                {% if not user_playlists %}
+                <div class="alert alert-info mt-3">
+                    У вас пока нет плейлистов. 
+                    <a href="{% url 'music:playlist_create' %}" class="alert-link">Создать новый плейлист</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Аудиоплеер -->
+<div id="player" style="display: none;">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <!-- Информация о треке -->
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <img id="playerCover" src="" alt="Track cover" class="me-3" style="width: 48px; height: 48px; border-radius: 4px;">
+                    <div class="track-info">
+                        <div id="playerTitle" class="text-white" style="font-size: 0.95rem; font-weight: 500;"></div>
+                        <div id="playerArtist" class="text-white-50" style="font-size: 0.85rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Управление воспроизведением -->
+            <div class="col-md-6">
+                <div class="d-flex flex-column align-items-center">
+                    <!-- Кнопки управления -->
+                    <div class="control-buttons mb-2">
+                        <button id="prevButton" class="btn btn-link text-white mx-2" style="opacity: 0.7;">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button id="playPauseButton" class="btn btn-link text-white mx-3">
+                            <i id="playPauseIcon" class="fas fa-play fa-lg"></i>
+                        </button>
+                        <button id="nextButton" class="btn btn-link text-white mx-2" style="opacity: 0.7;">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                        <button id="shuffleButton" class="btn btn-link text-white mx-2" style="opacity: 0.7;">
+                            <i class="fas fa-random"></i>
+                        </button>
+                        <button id="repeatButton" class="btn btn-link text-white mx-2" style="opacity: 0.7;">
+                            <i class="fas fa-redo-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Прогресс-бар -->
+                    <div class="progress-container d-flex align-items-center w-100">
+                        <span id="currentTime" class="text-white-50 me-2">0:00</span>
+                        <div class="progress flex-grow-1">
+                            <div class="progress-bar" role="progressbar"></div>
+                        </div>
+                        <span id="duration" class="text-white-50 ms-2">0:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Управление громкостью -->
+            <div class="col-md-3">
+                <div class="d-flex align-items-center justify-content-end">
+                    <button id="volumeButton" class="btn btn-link text-white me-2" style="opacity: 0.7;">
+                        <i id="volumeIcon" class="fas fa-volume-up"></i>
+                    </button>
+                    <div class="volume-slider" style="width: 100px;">
+                        <input type="range" class="form-range" id="volumeRange" min="0" max="100" value="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <audio id="audioPlayer"></audio>
+</div>
+
+<style>
+.track-item {
+    background-color: #282828;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    padding: 12px;
+    border: none;
+}
+
+.track-item:hover {
+    background-color: #333333;
+}
+
+.play-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background-color: #1db954;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.play-button:hover {
+    transform: scale(1.1);
+    background-color: #1ed760;
+}
+
+.track-item h5 {
+    color: #fff !important;
+    font-size: 1rem;
+    margin-bottom: 4px !important;
+}
+
+.track-item p {
+    color: #b3b3b3 !important;
+    font-size: 0.9rem;
+    margin-bottom: 4px !important;
+}
+
+.play-count {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+}
+
+.tracks-container {
+    margin-bottom: 140px;
+}
+
+/* Стили для плеера */
+#player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #282828;
+    border-top: 1px solid #404040;
+    padding: 16px 0;
+    z-index: 1000;
+}
+
+.progress {
+    background-color: #535353;
+    height: 4px;
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    margin: 0 8px;
+    overflow: visible !important;
+}
+
+.progress-bar {
+    background-color: #1db954;
+    height: 100%;
+    border-radius: 2px;
+    position: relative;
+    transition: width 0.1s linear;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    background-color: #fff;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.progress:hover .progress-bar::after {
+    opacity: 1;
+}
+
+.track-duration {
+    color: #b3b3b3 !important;
+    font-size: 0.9rem;
+    margin-bottom: 4px !important;
+}
+</style>
+
+<script>
+let currentTrackId = null;
+let playlist = [];
+let currentPlaylistIndex = -1;
+let isShuffleEnabled = false;
+let repeatMode = 'none';
+let isDragging = false;
+
+function initializePlaylist() {
+    playlist = Array.from(document.querySelectorAll('.track-item')).map(track => ({
+        id: track.dataset.trackId,
+        url: track.dataset.audioUrl,
+        title: track.dataset.title,
+        artist: track.dataset.artist,
+        cover: track.dataset.cover
+    }));
+}
+
+function playTrack(url, title, artist, cover, trackId) {
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playPauseIcon = document.getElementById('playPauseIcon');
+    const player = document.getElementById('player');
+    
+    if (currentTrackId === trackId) {
+        togglePlay();
+        return;
+    }
+
+    document.querySelectorAll('.play-button i').forEach(icon => {
+        icon.classList.replace('fa-pause', 'fa-play');
+    });
+    
+    audioPlayer.src = url;
+    document.getElementById('playerTitle').textContent = title;
+    document.getElementById('playerArtist').textContent = artist;
+    document.getElementById('playerCover').src = cover;
+    player.style.display = 'block';
+    
+    currentPlaylistIndex = playlist.findIndex(track => track.id === trackId.toString());
+    currentTrackId = trackId;
+    
+    incrementPlayCount(trackId);
+    
+    audioPlayer.play()
+        .then(() => {
+            playPauseIcon.classList.replace('fa-play', 'fa-pause');
+            const currentTrackButton = document.querySelector(`[data-track-id="${trackId}"] .play-button i`);
+            if (currentTrackButton) {
+                currentTrackButton.classList.replace('fa-play', 'fa-pause');
+            }
+        })
+        .catch(error => console.error('Error playing audio:', error));
+}
+
+function togglePlay() {
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playPauseIcon = document.getElementById('playPauseIcon');
+    
+    if (audioPlayer.paused) {
+        audioPlayer.play().then(() => {
+            playPauseIcon.classList.replace('fa-play', 'fa-pause');
+            updatePlayButtonIcon(currentTrackId, true);
+        });
+    } else {
+        audioPlayer.pause();
+        playPauseIcon.classList.replace('fa-pause', 'fa-play');
+        updatePlayButtonIcon(currentTrackId, false);
+    }
+}
+
+function updatePlayButtonIcon(trackId, isPlaying) {
+    const button = document.querySelector(`[data-track-id="${trackId}"] .play-button i`);
+    if (button) {
+        button.classList.replace(isPlaying ? 'fa-play' : 'fa-pause', 
+                               isPlaying ? 'fa-pause' : 'fa-play');
+    }
+}
+
+function incrementPlayCount(trackId) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/tracks/${trackId}/increment-play-count/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const playCountElement = document.querySelector(`[data-track-id="${trackId}"] .play-count`);
+        if (playCountElement) {
+            playCountElement.innerHTML = `<i class="fas fa-play"></i> ${data.play_count}`;
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    seconds = Math.floor(seconds % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function playNextTrack() {
+    if (playlist.length === 0) return;
+    
+    let nextIndex;
+    if (isShuffleEnabled) {
+        nextIndex = Math.floor(Math.random() * playlist.length);
+    } else {
+        nextIndex = (currentPlaylistIndex + 1) % playlist.length;
+    }
+    
+    const nextTrack = playlist[nextIndex];
+    playTrack(nextTrack.url, nextTrack.title, nextTrack.artist, nextTrack.cover, nextTrack.id);
+}
+
+function playPreviousTrack() {
+    if (playlist.length === 0) return;
+    
+    let prevIndex;
+    if (isShuffleEnabled) {
+        prevIndex = Math.floor(Math.random() * playlist.length);
+    } else {
+        prevIndex = (currentPlaylistIndex - 1 + playlist.length) % playlist.length;
+    }
+    
+    const prevTrack = playlist[prevIndex];
+    playTrack(prevTrack.url, prevTrack.title, prevTrack.artist, prevTrack.cover, prevTrack.id);
+}
+
+function toggleShuffle() {
+    const shuffleButton = document.getElementById('shuffleButton');
+    isShuffleEnabled = !isShuffleEnabled;
+    shuffleButton.style.opacity = isShuffleEnabled ? '1' : '0.7';
+    shuffleButton.classList.toggle('active');
+}
+
+function toggleRepeat() {
+    const repeatButton = document.getElementById('repeatButton');
+    switch (repeatMode) {
+        case 'none':
+            repeatMode = 'one';
+            repeatButton.style.opacity = '1';
+            repeatButton.classList.add('active');
+            repeatButton.innerHTML = '<i class="fas fa-redo-alt"></i>';
+            break;
+        case 'one':
+            repeatMode = 'none';
+            repeatButton.style.opacity = '0.7';
+            repeatButton.classList.remove('active');
+            repeatButton.innerHTML = '<i class="fas fa-redo-alt"></i>';
+            break;
+    }
+}
+
+function updateProgressBar(currentTime, duration) {
+    if (!isDragging) {
+        const progress = (currentTime / duration) * 100;
+        document.querySelector('.progress-bar').style.width = `${progress}%`;
+        document.getElementById('currentTime').textContent = formatTime(currentTime);
+        document.getElementById('duration').textContent = formatTime(duration);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializePlaylist();
+    const audioPlayer = document.getElementById('audioPlayer');
+    const progressContainer = document.querySelector('.progress');
+    const volumeRange = document.getElementById('volumeRange');
+    const volumeButton = document.getElementById('volumeButton');
+    const volumeIcon = document.getElementById('volumeIcon');
+    let lastVolume = 1;
+    
+    // Обработчики для кнопок плеера
+    document.getElementById('playPauseButton').addEventListener('click', togglePlay);
+    document.getElementById('nextButton').addEventListener('click', playNextTrack);
+    document.getElementById('prevButton').addEventListener('click', playPreviousTrack);
+    document.getElementById('shuffleButton').addEventListener('click', toggleShuffle);
+    document.getElementById('repeatButton').addEventListener('click', toggleRepeat);
+    
+    // Обработчики для кнопок воспроизведения треков
+    document.querySelectorAll('.play-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const trackItem = this.closest('.track-item');
+            if (trackItem) {
+                playTrack(
+                    trackItem.dataset.audioUrl,
+                    trackItem.dataset.title,
+                    trackItem.dataset.artist,
+                    trackItem.dataset.cover,
+                    trackItem.dataset.trackId
+                );
+            }
+        });
+    });
+    
+    // Обработчики для прогресс-бара с поддержкой перетаскивания
+    const progressBar = document.querySelector('.progress');
+    let isDragging = false;
+
+    progressBar.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        updateProgressFromEvent(e);
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+            updateProgressFromEvent(e);
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
+
+    function updateProgressFromEvent(e) {
+        const rect = progressBar.getBoundingClientRect();
+        const pos = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
+        audioPlayer.currentTime = pos * audioPlayer.duration;
+    }
+    
+    // Обработчики для управления звуком
+    volumeRange.addEventListener('input', function() {
+        const volume = this.value / 100;
+        audioPlayer.volume = volume;
+        updateVolumeIcon(volume);
+    });
+    
+    volumeButton.addEventListener('click', function() {
+        if (audioPlayer.volume > 0) {
+            lastVolume = audioPlayer.volume;
+            audioPlayer.volume = 0;
+            volumeRange.value = 0;
+            volumeIcon.className = 'fas fa-volume-mute';
+        } else {
+            audioPlayer.volume = lastVolume;
+            volumeRange.value = lastVolume * 100;
+            updateVolumeIcon(lastVolume);
+        }
+    });
+    
+    function updateVolumeIcon(volume) {
+        if (volume > 0.5) {
+            volumeIcon.className = 'fas fa-volume-up';
+        } else if (volume > 0) {
+            volumeIcon.className = 'fas fa-volume-down';
+        } else {
+            volumeIcon.className = 'fas fa-volume-mute';
+        }
+    }
+    
+    // Обработчики событий аудиоплеера
+    audioPlayer.addEventListener('timeupdate', function() {
+        updateProgressBar(this.currentTime, this.duration);
+    });
+    
+    audioPlayer.addEventListener('ended', function() {
+        if (repeatMode === 'one') {
+            audioPlayer.currentTime = 0;
+            audioPlayer.play();
+        } else {
+            if (currentPlaylistIndex === playlist.length - 1) {
+                currentPlaylistIndex = -1;
+            }
+            playNextTrack();
+        }
+    });
+    
+    // Инициализация начального состояния
+    volumeRange.value = 100;
+    audioPlayer.volume = 1;
+
+    // Обработка добавления в плейлист
+    const addToPlaylistButtons = document.querySelectorAll('.add-to-playlist-btn');
+    addToPlaylistButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const trackId = this.dataset.trackId;
+            document.getElementById('modalTrackId').value = trackId;
+            new bootstrap.Modal(document.getElementById('playlistModal')).show();
+        });
+    });
+
+    // Обработчик для кнопок выбора плейлиста
+    const playlistSelectButtons = document.querySelectorAll('.playlist-select-btn');
+    playlistSelectButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const playlistId = this.dataset.playlistId;
+            const form = document.getElementById('addToPlaylistForm');
+            const formData = new FormData(form);
+            formData.append('playlist_id', playlistId);
+
+            fetch('{% url "music:add_to_playlist" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('Трек успешно добавлен в плейлист');
+                } else if (data.error) {
+                    alert(data.error);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('playlistModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при добавлении трека в плейлист');
+                bootstrap.Modal.getInstance(document.getElementById('playlistModal')).hide();
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

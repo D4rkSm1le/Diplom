@@ -3,17 +3,492 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1ed15e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{% block title %}Музыкальный сервис{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
+        body {
+            background-color: white;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* Общие стили для кнопок */
+        .btn-custom {
+            background-color: #1ed15e !important;
+            border-color: #1ed15e !important;
+            color: white !important;
+        }
+
+        .btn-custom:hover {
+            background-color: #1ab251 !important;
+            border-color: #1ab251 !important;
+        }
+
+        .btn-outline-custom {
+            color: #1ed15e !important;
+            border-color: #1ed15e !important;
+            background-color: transparent !important;
+        }
+
+        .btn-outline-custom:hover {
+            background-color: #1ed15e !important;
+            color: white !important;
+        }
+
+        .dropdown-item:active {
+            background-color: #1ed15e !important;
+        }
+
+        /* Переопределение стандартных кнопок Bootstrap */
+        .btn-primary:not(.admin *) {
+            background-color: #1ed15e !important;
+            border-color: #1ed15e !important;
+        }
+
+        .btn-primary:hover:not(.admin *) {
+            background-color: #1ab251 !important;
+            border-color: #1ab251 !important;
+        }
+
+        .btn-outline-primary:not(.admin *) {
+            color: #1ed15e !important;
+            border-color: #1ed15e !important;
+            background-color: transparent !important;
+        }
+
+        .btn-outline-primary:hover:not(.admin *) {
+            background-color: #1ed15e !important;
+            color: white !important;
+        }
+
+        /* Стили для прогресс-бара */
+        .progress-bar {
+            background-color: #1ed15e !important;
+        }
+
         .badge-notify {
             background-color: red;
             position: relative;
             top: -10px;
             left: -10px;
+        }
+
+        /* Стили для названия и автора трека на всех страницах */
+        .track-title, 
+        .track-artist,
+        .track-info h5,
+        .track-info p,
+        .track-info a,
+        #playerTitle,
+        #playerArtist,
+        .track-item h5,
+        .track-item p,
+        .album-tracks h5,
+        .album-tracks p,
+        .playlist-tracks h5,
+        .playlist-tracks p,
+        .track-list h5,
+        .track-list p,
+        h5.track-name,
+        p.track-artist,
+        .track-name,
+        .artist-name,
+        .album-title,
+        .album-artist,
+        .card-title,
+        .card-text,
+        .album-info h5,
+        .album-info p,
+        .album-tracks .track-title,
+        .album-tracks .track-artist,
+        .playlist-info h5,
+        .playlist-info p,
+        .playlist-item h5,
+        .playlist-item p,
+        .playlist-track-title,
+        .playlist-track-artist,
+        .album-track-title,
+        .album-track-artist,
+        .track-details h5,
+        .track-details p,
+        .track-row h5,
+        .track-row p,
+        .track-list-item h5,
+        .track-list-item p,
+        .track-container h5,
+        .track-container p,
+        div[class*="track"] h5,
+        div[class*="track"] p,
+        div[class*="playlist"] h5,
+        div[class*="playlist"] p,
+        div[class*="album"] h5,
+        div[class*="album"] p {
+            color: #000000 !important;
+        }
+
+        /* Принудительное применение черного цвета для ссылок в треках */
+        .track-info a,
+        .playlist-tracks a,
+        .album-tracks a,
+        .track-list a,
+        a.track-title,
+        a.track-artist,
+        a.track-name,
+        a.artist-name {
+            color: #000000 !important;
+            text-decoration: none;
+        }
+
+        /* Стили для заголовков треков с увеличенной специфичностью */
+        .track-item h5,
+        .playlist-tracks h5,
+        .track-list h5,
+        .album-tracks h5,
+        h5.track-name,
+        .track-title,
+        .playlist-item .track-title,
+        .album-item .track-title,
+        .track-container .track-title,
+        div[class*="track"] h5.track-title,
+        div[class*="playlist"] h5.track-title,
+        div[class*="album"] h5.track-title {
+            color: #000000 !important;
+            font-size: 1rem !important;
+            margin-bottom: 4px !important;
+        }
+
+        /* Дополнительные стили для текста в плейлистах и альбомах */
+        .playlist-tracks .track-info *:not(.btn):not(button):not(.badge),
+        .album-tracks .track-info *:not(.btn):not(button):not(.badge) {
+            color: #000000 !important;
+        }
+
+        /* Стили для треков */
+        .track-item {
+            background-color: #f0f0f0 !important;
+            border: 1px solid #e0e0e0 !important;
+        }
+
+        .track-item:hover {
+            background-color: #e8e8e8 !important;
+        }
+
+        .track-info small {
+            color: #666666 !important;
+        }
+
+        .track-info small a:hover {
+            color: #1ed15e !important;
+        }
+
+        /* Стили для плеера и разделения с контентом */
+        #player, .player-container, .player-wrap, .player-fixed, .audio-player {
+            background-color: #A9A9A9 !important;
+            border-top: 1px solid #B9B9B9 !important;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+        }
+        
+        /* Стили для кнопок плеера */
+        .control-buttons button {
+            color: #000000 !important;
+        }
+
+        /* Стили для длительности трека и кнопки звука */
+        #currentTime,
+        #duration,
+        .volume-control button,
+        .volume-control i,
+        #volumeButton,
+        .loading-dots,
+        .volume-slider,
+        input[type="range"].volume-range,
+        #volumeRange {
+            color: #000000 !important;
+        }
+
+        .progress {
+            background-color: #B9B9B9 !important;
+        }
+
+        /* Стили для точек загрузки */
+        .loading-dots,
+        .loading-dots::before,
+        .loading-dots::after,
+        .loading-indicator,
+        .loading-indicator::before,
+        .loading-indicator::after,
+        .dots,
+        .dots::before,
+        .dots::after {
+            color: #000000 !important;
+            background-color: #000000 !important;
+        }
+
+        /* Дополнительные стили для плеера */
+        .player-container {
+            background-color: #A9A9A9 !important;
+        }
+
+        .player-controls {
+            background-color: #A9A9A9 !important;
+        }
+
+        /* Стили для кнопок в плеере */
+        .track-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Стили для трех точек в меню */
+        .dropdown-toggle::after,
+        .btn-more::after,
+        .track-menu-button,
+        .track-menu-button i,
+        .btn[data-bs-toggle="dropdown"],
+        .btn[data-bs-toggle="dropdown"] i {
+            color: #000000 !important;
+        }
+
+        .track-controls button {
+            background-color: transparent;
+            border: none;
+            padding: 5px;
+            color: #000000 !important;
+        }
+
+        .track-controls button:hover {
+            color: #1ed15e !important;
+        }
+
+        /* Стили для активной кнопки случайного воспроизведения */
+        .control-buttons button[data-action="shuffle"].active,
+        #shuffleButton.active,
+        button[aria-label="Перемешать"].active {
+            color: #1ed15e !important;
+        }
+
+        /* Дополнительные стили для создания разделения между контентом и плеером */
+        @media (max-width: 768px) {
+            .track-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .track-controls:first-child {
+                margin-bottom: 15px;
+            }
+            
+            .btn-custom,
+            .btn-outline-custom,
+            .btn-primary,
+            .btn-outline-primary {
+                background-color: #1ed15e !important;
+                border-color: #1ed15e !important;
+                color: white !important;
+                margin: 5px !important;
+            }
+
+            .btn-outline-custom:hover,
+            .btn-outline-primary:hover {
+                background-color: #1ab251 !important;
+                border-color: #1ab251 !important;
+                color: white !important;
+            }
+
+            .navbar-nav {
+                padding: 1rem 0;
+            }
+            
+            .navbar-collapse {
+                background-color: rgba(255, 255, 255, 0.95);
+                padding: 1rem;
+                border-radius: 8px;
+                margin-top: 1rem;
+            }
+            
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .card, .card-body {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            /* Улучшение отображения контента */
+            .row {
+                margin-left: 0;
+                margin-right: 0;
+            }
+            
+            /* Убедимся, что основной контент отображается корректно */
+            #navbarNav.show, 
+            #navbarNav.collapsing {
+                display: block;
+                width: 100%;
+                clear: both;
+            }
+            
+            /* Исправления для навигации */
+            .navbar-brand {
+                margin-right: 0;
+            }
+            
+            .navbar-toggler {
+                padding: 0.25rem 0.5rem;
+            }
+            
+            /* Создаем видимый разделитель перед плеером */
+            body {
+                padding-bottom: 80px;
+            }
+            
+            #player, .player-container, .player-wrap, .player-fixed, .audio-player {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1000;
+                border-top: 2px solid #1ed15e !important;
+                padding: 8px 0;
+            }
+            
+            /* Улучшаем внешний вид плеера на мобильных */
+            .player-controls {
+                padding: 5px 0;
+            }
+            
+            /* Улучшаем контраст и видимость элементов плеера */
+            .player-controls button, .player-controls a {
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                margin: 0 5px;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            body {
+                font-size: 14px;
+                overflow-x: hidden;
+                padding-bottom: 70px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                margin-bottom: 0.75rem;
+            }
+            
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            /* Убедимся, что внутренние элементы не вылезают за границы */
+            img, video, table, .table-responsive, .card-img-top {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            /* Уменьшаем отступы */
+            .card {
+                margin-bottom: 0.75rem;
+            }
+            
+            /* Убираем излишние отступы */
+            .mt-4 {
+                margin-top: 1rem !important;
+            }
+            
+            /* Уменьшаем размер шрифтов в навигации */
+            .navbar {
+                padding: 0.5rem 1rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.25rem;
+            }
+            
+            /* Исправления для навигационного меню в мобильном виде */
+            .navbar-collapse {
+                background-color: #343a40 !important;
+            }
+            
+            .navbar-dark .navbar-nav .nav-link {
+                color: rgba(255,255,255,.75);
+                padding: 0.5rem 0;
+            }
+            
+            /* Плеер для маленьких экранов */
+            #player, .player-container, .player-wrap, .player-fixed, .audio-player {
+                padding: 5px 0;
+            }
+            
+            /* Уменьшаем размер кнопок плеера на маленьких экранах */
+            .player-controls button, .player-controls a {
+                width: 36px;
+                height: 36px;
+                margin: 0 3px;
+            }
+            
+            /* Обеспечиваем видимость названия трека в плеере */
+            .track-info-player, #playerTitle, #playerArtist {
+                max-width: 180px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        /* Стили для регулятора громкости */
+        input[type="range"]::-webkit-slider-thumb {
+            background: #000000 !important;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            background: #000000 !important;
+        }
+        
+        input[type="range"]::-ms-thumb {
+            background: #000000 !important;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #000000 !important;
+        }
+        
+        input[type="range"]::-moz-range-track {
+            background: #000000 !important;
+        }
+        
+        input[type="range"]::-ms-track {
+            background: #000000 !important;
+        }
+
+        .volume-control input[type="range"] {
+            background-color: #000000 !important;
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -52,14 +527,21 @@
                             </li>
                         {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'music:playlist_list' %}">Плейлисты</a>
+                            <a class="nav-link {% if request.resolver_match.url_name == 'playlist_list' %}active{% endif %}" href="{% url 'music:playlist_list' %}">
+                                <i class="fas fa-list"></i> Плейлисты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'album_list' %}active{% endif %}" href="{% url 'music:album_list' %}">
+                                <i class="fas fa-compact-disc"></i> Альбомы
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <span class="nav-link">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 {% if user.profile.role == 'artist' %}
                                     <i class="fas fa-music"></i>
                                 {% elif user.is_superuser %}
@@ -68,15 +550,23 @@
                                     <i class="fas fa-user"></i>
                                 {% endif %}
                                 {{ user.username }}
-                            </span>
-                        </li>
-                        <li class="nav-item">
-                            <form method="post" action="{% url 'music:logout' %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn nav-link bg-transparent border-0">
-                                    <i class="fas fa-sign-out-alt"></i> Выйти
-                                </button>
-                            </form>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'music:settings' %}">
+                                        <i class="fas fa-cog"></i> Настройки
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'music:logout' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt"></i> Выйти
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
@@ -95,7 +585,7 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <div class="container mt-4 main-container">
         {% if messages %}
             <div class="messages">
                 {% for message in messages %}
@@ -109,7 +599,287 @@
         {% block content %}{% endblock %}
     </div>
 
+    <!-- Модальное окно для выбора плейлиста -->
+    <div class="modal fade" id="playlistModal" tabindex="-1" aria-labelledby="playlistModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="playlistModalLabel">Выберите плейлист</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% if user.is_authenticated %}
+                        {% for playlist in user.playlists.all %}
+                            <button class="btn btn-outline-custom w-100 mb-2 select-playlist-btn" 
+                                    data-playlist-id="{{ playlist.id }}">
+                                {{ playlist.title }}
+                            </button>
+                        {% empty %}
+                            <p>У вас пока нет плейлистов. Создайте новый плейлист.</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <a href="{% url 'music:playlist_create' %}" class="btn btn-custom">Создать новый плейлист</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработчик для кнопок "Добавить в плейлист"
+            document.querySelectorAll('.dropdown-item[data-action="add-to-playlist"]').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const trackId = this.closest('.dropdown-menu').dataset.trackId;
+                    
+                    // Показываем модальное окно
+                    const modal = new bootstrap.Modal(document.getElementById('playlistModal'));
+                    modal.show();
+                    
+                    // Сохраняем ID трека в модальном окне
+                    document.getElementById('playlistModal').dataset.trackId = trackId;
+                });
+            });
+
+            // Обработчик для выбора плейлиста в модальном окне
+            document.querySelectorAll('.select-playlist-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const playlistId = this.dataset.playlistId;
+                    const trackId = document.getElementById('playlistModal').dataset.trackId;
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                    
+                    // Отправляем запрос на добавление трека в плейлист
+                    fetch('/music/add_to_playlist/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            track_id: trackId,
+                            playlist_id: playlistId
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('Трек успешно добавлен в плейлист');
+                        } else {
+                            alert(data.message || 'Произошла ошибка при добавлении трека в плейлист');
+                        }
+                        // Закрываем модальное окно
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('playlistModal'));
+                        modal.hide();
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при добавлении трека в плейлист');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('playlistModal'));
+                        modal.hide();
+                    });
+                });
+            });
+            
+            // Адаптивное поведение для мобильных устройств
+            function handleMobileAdaptation() {
+                // Проверяем, является ли устройство мобильным (по ширине экрана)
+                const isMobile = window.innerWidth < 768;
+                
+                // Добавляем или удаляем классы на основе размера экрана
+                document.body.classList.toggle('mobile-view', isMobile);
+                
+                // Проверяем, есть ли контент в основном контейнере
+                const mainContainer = document.querySelector('.main-container');
+                if (mainContainer && isMobile) {
+                    // Проверяем высоту контента
+                    if (mainContainer.scrollHeight <= 100) {
+                        // Если контент маленький или пустой, добавляем минимальную высоту
+                        mainContainer.style.minHeight = '70vh';
+                    }
+                }
+                
+                // Исправляем отображение навигационного меню на мобильных
+                const navbarCollapse = document.querySelector('.navbar-collapse');
+                if (navbarCollapse && isMobile) {
+                    // Убеждаемся, что меню скрыто по умолчанию на мобильных
+                    if (!navbarCollapse.classList.contains('collapsing')) {
+                        navbarCollapse.classList.remove('show');
+                    }
+                }
+            }
+            
+            // Запускаем функцию при загрузке страницы
+            handleMobileAdaptation();
+            
+            // Запускаем функцию при изменении размера окна
+            window.addEventListener('resize', handleMobileAdaptation);
+            
+            // Улучшение взаимодействия с прогресс-баром на мобильных устройствах
+            function enhanceProgressBarInteraction() {
+                const progressBars = document.querySelectorAll('.progress, .progress-container, .track-progress');
+                
+                progressBars.forEach(progressBar => {
+                    // Проверяем, не был ли уже обработан этот элемент
+                    if (progressBar.hasAttribute('data-enhanced')) {
+                        return;
+                    }
+
+                    // Помечаем элемент как обработанный
+                    progressBar.setAttribute('data-enhanced', 'true');
+                    
+                    // Функция для обновления позиции слайдера
+                    function updateSliderPosition(event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        const rect = progressBar.getBoundingClientRect();
+                        let clientX;
+                        
+                        // Получаем координату X события (поддержка как тач, так и мыши)
+                        if (event.type.startsWith('touch')) {
+                            clientX = event.touches[0].clientX;
+                        } else {
+                            clientX = event.clientX;
+                        }
+                        
+                        // Вычисляем процент
+                        let percent = (clientX - rect.left) / rect.width;
+                        percent = Math.max(0, Math.min(1, percent));
+                        
+                        // Находим соответствующий прогресс-бар
+                        const progressBarElem = progressBar.querySelector('.progress-bar');
+                        if (progressBarElem) {
+                            progressBarElem.style.width = (percent * 100) + '%';
+                        }
+                        
+                        // Запускаем пользовательское событие для обновления времени трека
+                        const customEvent = new CustomEvent('progressBarUpdate', {
+                            detail: { percent: percent }
+                        });
+                        progressBar.dispatchEvent(customEvent);
+                        
+                        // Если это страница альбома, находим аудио-элемент в ближайшем родителе
+                        const audioElement = findNearestAudioElement(progressBar) || document.querySelector('audio');
+                        if (audioElement) {
+                            audioElement.currentTime = percent * audioElement.duration;
+                        }
+                    }
+                    
+                    // Функция для поиска ближайшего аудио-элемента
+                    function findNearestAudioElement(element) {
+                        // Ищем в текущем элементе
+                        let audioElement = element.querySelector('audio');
+                        if (audioElement) return audioElement;
+                        
+                        // Ищем в родителях
+                        let parent = element.parentElement;
+                        while (parent) {
+                            audioElement = parent.querySelector('audio');
+                            if (audioElement) return audioElement;
+                            
+                            // Проверяем в соседних элементах
+                            const siblings = Array.from(parent.children);
+                            for (const sibling of siblings) {
+                                if (sibling !== element) {
+                                    audioElement = sibling.querySelector('audio');
+                                    if (audioElement) return audioElement;
+                                }
+                            }
+                            
+                            parent = parent.parentElement;
+                            if (parent && parent.tagName === 'BODY') break;
+                        }
+                        
+                        // Ищем на всей странице
+                        return document.querySelector('audio');
+                    }
+                    
+                    // Обработчики событий мыши
+                    progressBar.addEventListener('mousedown', function(event) {
+                        updateSliderPosition(event);
+                        
+                        // Добавляем обработчики для перемещения и отпускания
+                        document.addEventListener('mousemove', updateSliderPosition);
+                        document.addEventListener('mouseup', function() {
+                            document.removeEventListener('mousemove', updateSliderPosition);
+                        }, { once: true });
+                    });
+                    
+                    // Обработчики событий касания
+                    progressBar.addEventListener('touchstart', function(event) {
+                        updateSliderPosition(event);
+                        
+                        // Добавляем обработчики для перемещения и отпускания
+                        document.addEventListener('touchmove', updateSliderPosition, { passive: false });
+                        document.addEventListener('touchend', function() {
+                            document.removeEventListener('touchmove', updateSliderPosition);
+                        }, { once: true });
+                    }, { passive: false });
+                    
+                    // Обработчик одиночного клика/касания
+                    progressBar.addEventListener('click', updateSliderPosition);
+                });
+            }
+            
+            // Специальная функция для обработки прогресс-бара на странице альбома
+            function enhanceAlbumPagePlayer() {
+                const albumPlayers = document.querySelectorAll('.album-player, .album-tracks');
+                if (!albumPlayers.length) return;
+                
+                // Для каждого плеера в альбоме
+                albumPlayers.forEach(player => {
+                    const progressBar = player.querySelector('.progress, .progress-container, .track-progress');
+                    const audioElement = player.querySelector('audio') || document.querySelector('audio');
+                    
+                    if (!progressBar || !audioElement) return;
+                    
+                    // Обновление прогресс-бара при изменении времени аудио
+                    audioElement.addEventListener('timeupdate', function() {
+                        const progressBarElem = progressBar.querySelector('.progress-bar');
+                        if (progressBarElem && !isNaN(audioElement.duration) && audioElement.duration > 0) {
+                            const percent = (audioElement.currentTime / audioElement.duration) * 100;
+                            progressBarElem.style.width = percent + '%';
+                        }
+                    });
+                    
+                    // Обновление времени при взаимодействии с прогресс-баром
+                    progressBar.addEventListener('progressBarUpdate', function(e) {
+                        if (!isNaN(audioElement.duration)) {
+                            audioElement.currentTime = e.detail.percent * audioElement.duration;
+                        }
+                    });
+                });
+            }
+            
+            // Запускаем улучшение взаимодействия с прогресс-барами
+            enhanceProgressBarInteraction();
+            
+            // Запускаем специальное улучшение для страницы альбома
+            enhanceAlbumPagePlayer();
+            
+            // Восстанавливаем улучшения после динамических изменений DOM
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length > 0) {
+                        enhanceProgressBarInteraction();
+                        enhanceAlbumPagePlayer();
+                    }
+                });
+            });
+            
+            // Запускаем наблюдение за изменениями в DOM
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html> 

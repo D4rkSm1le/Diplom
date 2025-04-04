@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load music_filters %}
+
+{% block title %}{% if album %}Редактирование альбома{% else %}Создание альбома{% endif %} - Музыкальный сервис{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title text-center mb-4">
+                        {% if album %}Редактирование альбома{% else %}Создание альбома{% endif %}
+                    </h1>
+
+                    <form method="post" enctype="multipart/form-data" id="albumForm">
+                        {% csrf_token %}
+                        
+                        <!-- Основная информация об альбоме -->
+                        <div class="mb-4">
+                            <h3>Информация об альбоме</h3>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Название альбома</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.title.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.artist.id_for_label }}" class="form-label">Исполнитель</label>
+                                {{ form.artist }}
+                                {% if form.artist.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.artist.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.release_date.id_for_label }}" class="form-label">Дата выпуска</label>
+                                {{ form.release_date }}
+                                {% if form.release_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.release_date.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.cover.id_for_label }}" class="form-label">Обложка альбома</label>
+                                {{ form.cover }}
+                                {% if form.cover.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.cover.errors }}
+                                </div>
+                                {% endif %}
+                                {% if album and album.cover %}
+                                <div class="mt-2">
+                                    <img src="{{ album.cover.url }}" alt="Текущая обложка" class="img-thumbnail" style="max-width: 200px;">
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.description.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Треки -->
+                        <div class="mb-4">
+                            <h3>Треки</h3>
+                            <div id="tracks-formset">
+                                {{ formset.management_form }}
+                                {% for track_form in formset %}
+                                <div class="track-form mb-3 p-3 border rounded">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h4 class="track-number mb-0">Трек {{ forloop.counter }}</h4>
+                                        <button type="button" class="btn btn-danger btn-sm remove-track">
+                                            <i class="fas fa-times"></i> Удалить
+                                        </button>
+                                    </div>
+                                    
+                                    {{ track_form.id }}
+                                    <div class="row">
+                                        <div class="col-12 mb-2">
+                                            <label class="form-label">Название трека</label>
+                                            {{ track_form.title }}
+                                        </div>
+                                        <div style="display: none;">
+                                            {{ track_form.track_number }}
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Аудио файл</label>
+                                        {{ track_form.audio_file }}
+                                        {% if track_form.instance.audio_file %}
+                                        <div class="mt-1">
+                                            <small class="text-muted">Текущий файл: {{ track_form.instance.audio_file.name }}</small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div style="display: none;">
+                                        {{ track_form.DELETE }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <button type="button" class="btn btn-success" id="add-track">
+                                <i class="fas fa-plus"></i> Добавить трек
+                            </button>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Сохранить альбом
+                            </button>
+                            <a href="{% url 'music:album_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.track-form {
+    background-color: #282828;
+}
+
+.track-form input,
+.track-form textarea {
+    background-color: #333;
+    border-color: #404040;
+    color: #fff;
+}
+
+.track-form input:focus,
+.track-form textarea:focus {
+    background-color: #404040;
+    border-color: #505050;
+    color: #fff;
+}
+
+.track-form label {
+    color: #b3b3b3;
+}
+
+.track-number {
+    color: #b3b3b3;
+}
+
+.remove-track {
+    opacity: 0.8;
+}
+
+.remove-track:hover {
+    opacity: 1;
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formset = document.getElementById('tracks-formset');
+    const addButton = document.getElementById('add-track');
+    const totalFormsInput = document.querySelector('#id_tracks-TOTAL_FORMS');
+    
+    let formCount = parseInt(totalFormsInput.value);
+    
+    // Функция для обновления номеров треков
+    function updateTrackNumbers() {
+        formset.querySelectorAll('.track-form').forEach((form, index) => {
+            form.querySelector('.track-number').textContent = `Трек ${index + 1}`;
+            
+            // Обновляем номер трека в поле track_number, если оно пустое
+            const trackNumberInput = form.querySelector('input[name$="-track_number"]');
+            if (!trackNumberInput.value) {
+                trackNumberInput.value = index + 1;
+            }
+        });
+    }
+    
+    // Добавление нового трека
+    addButton.addEventListener('click', function() {
+        const empty_form = document.querySelector('.track-form').cloneNode(true);
+        
+        // Обновляем индексы в именах полей
+        empty_form.querySelectorAll('input, select, textarea').forEach(input => {
+            input.name = input.name.replace('-0-', `-${formCount}-`);
+            input.id = input.id.replace('-0-', `-${formCount}-`);
+            input.value = '';
+        });
+        
+        // Очищаем информацию о текущем файле
+        const fileInfo = empty_form.querySelector('small');
+        if (fileInfo) fileInfo.remove();
+        
+        formset.appendChild(empty_form);
+        formCount++;
+        totalFormsInput.value = formCount;
+        
+        updateTrackNumbers();
+    });
+    
+    // Удаление трека
+    formset.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-track') || 
+            e.target.parentElement.classList.contains('remove-track')) {
+            const trackForm = e.target.closest('.track-form');
+            const deleteCheckbox = trackForm.querySelector('input[name$="-DELETE"]');
+            
+            if (deleteCheckbox) {
+                // Если это существующий трек, помечаем его на удаление
+                deleteCheckbox.checked = true;
+                trackForm.style.display = 'none';
+            } else {
+                // Если это новый трек, удаляем его полностью
+                trackForm.remove();
+                formCount--;
+                totalFormsInput.value = formCount;
+            }
+            
+            updateTrackNumbers();
+        }
+    });
+    
+    // Инициализация номеров треков при загрузке
+    updateTrackNumbers();
+});
+</script>
+{% endblock %}
+{% endblock %} 

@@ -53,14 +53,22 @@ audio::-webkit-media-controls-timeline {
 }
 
 /* Стили для плеера */
-.progress {
+.progress, .progress-container, .track-progress {
+    cursor: pointer;
+    position: relative;
+    height: 8px;
+    border-radius: 4px;
+    overflow: visible;
+    z-index: 10;
+    margin: 10px 0;
     background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
 }
 
 .progress-bar {
-    background-color: #fff;
+    position: relative;
+    height: 100%;
     transition: width 0.1s linear;
+    background-color: #fff;
 }
 
 .progress:hover .progress-bar {
@@ -131,4 +139,377 @@ audio::-webkit-media-controls-timeline {
 #currentTime, #duration {
     min-width: 45px;
     text-align: center;
+}
+
+/* Стили для основного контейнера */
+.main-container {
+    min-height: 70vh;
+    padding: 15px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    margin-bottom: 60px;
+}
+
+/* Стили для карточек */
+.card {
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+.card-body {
+    padding: 15px;
+}
+
+.card-img-top {
+    width: 100%;
+    object-fit: cover;
+    max-height: 200px;
+}
+
+/* Медиа-запросы для адаптивности */
+@media (max-width: 768px) {
+    audio {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .player-controls {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .player-controls button {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .audio-player-container {
+        padding: 10px;
+    }
+
+    .volume-slider {
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    #playerCover {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .btn-link {
+        padding: 0.3rem;
+    }
+
+    #currentTime, #duration {
+        min-width: 35px;
+        font-size: 0.9em;
+    }
+
+    /* Добавляем дополнительные стили для лучшего отображения содержимого */
+    .container {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
+        padding: 0 15px;
+    }
+    
+    /* Обеспечиваем, чтобы содержимое не выходило за пределы */
+    .card {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+    
+    /* Стили для мобильной навигации */
+    .navbar-collapse {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+    }
+    
+    /* Исправление для плавающих элементов */
+    .clearfix::after {
+        content: "";
+        clear: both;
+        display: table;
+    }
+
+    .main-container {
+        padding: 10px;
+        min-height: 60vh;
+        margin-bottom: 80px;
+    }
+
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .card-body {
+        padding: 12px;
+    }
+    
+    .card-img-top {
+        max-height: 160px;
+    }
+    
+    /* Исправление для флекс-контейнеров на мобильных */
+    .row {
+        margin-left: -5px;
+        margin-right: -5px;
+    }
+    
+    .col, .col-1, .col-2, .col-3, .col-4, .col-5, .col-6, 
+    .col-7, .col-8, .col-9, .col-10, .col-11, .col-12, 
+    .col-sm, .col-md, .col-lg, .col-xl {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    /* Добавляем разделитель между последним треком и плеером */
+    .track-list-item:last-child,
+    .track-item:last-child,
+    .card:last-child,
+    .track-container:last-child,
+    .album-tracks > div:last-child,
+    .playlist-tracks > div:last-child {
+        margin-bottom: 80px !important;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    /* Стили для фиксированного плеера на мобильных */
+    #player, .player-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background-color: #A9A9A9 !important;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+        padding: 10px 5px;
+        border-top: 2px solid #1ed15e;
+    }
+
+    /* Исправляем слайдер для мобильных устройств */
+    .progress, .progress-container, .track-progress {
+        height: 10px;
+        margin: 15px 0;
+        touch-action: none;
+    }
+    
+    /* Увеличиваем активную область для тач-взаимодействия */
+    .progress:before, .progress-container:before, .track-progress:before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 0;
+        right: 0;
+        bottom: -10px;
+        z-index: 5;
+    }
+    
+    /* Исправление для слайдера громкости */
+    .volume-slider {
+        touch-action: none;
+        height: 30px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-range {
+        touch-action: none;
+        cursor: pointer;
+    }
+
+    /* Увеличиваем размер прогресс-бара на странице альбома для мобильных */
+    .album-player .progress,
+    .album-player .progress-container,
+    .album-player .track-progress,
+    .album-tracks .progress,
+    .album-tracks .progress-container,
+    .album-tracks .track-progress {
+        height: 14px !important;
+        margin: 20px 0 !important;
+    }
+    
+    .album-player .progress:before,
+    .album-tracks .progress:before {
+        top: -25px;
+        bottom: -25px;
+    }
+}
+
+@media (max-width: 576px) {
+    .player-controls button {
+        font-size: 12px;
+        padding: 3px 8px;
+    }
+
+    .form-range {
+        height: 3px;
+    }
+
+    .form-range::-webkit-slider-thumb {
+        width: 10px;
+        height: 10px;
+    }
+
+    .btn-link:hover {
+        transform: scale(1.05);
+    }
+
+    /* Дополнительные стили для очень маленьких экранов */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Уменьшаем отступы на маленьких экранах */
+    .container {
+        padding: 0 10px;
+    }
+    
+    /* Уменьшаем размер кнопок на маленьких экранах */
+    .btn {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Фикс для изображений и медиа */
+    img, audio, video {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Оптимизация отступов */
+    .mt-4, .my-4 {
+        margin-top: 1rem !important;
+    }
+    
+    .mb-4, .my-4 {
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Исправление для блока контента */
+    #content, .content {
+        padding: 10px 0;
+    }
+
+    .main-container {
+        padding: 8px;
+        min-height: 50vh;
+        margin-bottom: 70px;
+    }
+
+    .card {
+        margin-bottom: 10px;
+    }
+    
+    .card-body {
+        padding: 10px;
+    }
+    
+    .card-img-top {
+        max-height: 140px;
+    }
+    
+    /* Уменьшаем отступы для лучшего отображения на малых экранах */
+    .row {
+        margin-left: -3px;
+        margin-right: -3px;
+    }
+    
+    .col, .col-1, .col-2, .col-3, .col-4, .col-5, .col-6, 
+    .col-7, .col-8, .col-9, .col-10, .col-11, .col-12, 
+    .col-sm, .col-md, .col-lg, .col-xl {
+        padding-left: 3px;
+        padding-right: 3px;
+    }
+
+    /* Увеличиваем отступ для последнего элемента на маленьких экранах */
+    .track-list-item:last-child,
+    .track-item:last-child,
+    .card:last-child,
+    .track-container:last-child,
+    .album-tracks > div:last-child,
+    .playlist-tracks > div:last-child {
+        margin-bottom: 70px !important;
+        padding-bottom: 10px;
+    }
+    
+    /* Компактный плеер для маленьких экранов */
+    #player, .player-container {
+        padding: 8px 3px;
+    }
+
+    /* Дополнительные улучшения для слайдера на малых экранах */
+    .progress, .progress-container, .track-progress {
+        height: 12px;
+        margin: 18px 0;
+    }
+    
+    .progress:before, .progress-container:before, .track-progress:before {
+        top: -15px;
+        bottom: -15px;
+    }
+}
+
+/* Улучшение отзывчивости для тач-устройств */
+@media (hover: none) {
+    .btn-link:hover {
+        transform: none;
+    }
+
+    .progress:hover .progress-bar {
+        background-color: #fff;
+    }
+}
+
+/* Оптимизация для устройств с высоким DPI */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .form-range::-webkit-slider-thumb {
+        box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* Специальные стили для прогресс-бара на странице альбома */
+.album-player .progress,
+.album-player .progress-container,
+.album-player .track-progress,
+.album-tracks .progress,
+.album-tracks .progress-container,
+.album-tracks .track-progress {
+    cursor: pointer !important;
+    position: relative !important;
+    height: 8px !important;
+    border-radius: 4px !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    margin: 15px 0 !important;
+    z-index: 20 !important;
+    touch-action: none !important;
+}
+
+.album-player .progress-bar,
+.album-tracks .progress-bar {
+    background-color: #1ed15e !important;
+    position: relative !important;
+    height: 100% !important;
+}
+
+/* Увеличиваем область касания для прогресс-бара альбома */
+.album-player .progress:before,
+.album-tracks .progress:before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 0;
+    right: 0;
+    bottom: -20px;
+    z-index: 5;
 } 

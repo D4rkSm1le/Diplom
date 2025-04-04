@@ -12,6 +12,8 @@ urlpatterns = [
     
     # Админка
     path('admin-panel/', views.admin_panel, name='admin_panel'),
+    path('backup/', views.backup_system, name='backup_system'),
+    path('restore/', views.restore_system, name='restore_system'),
     
     # Треки
     path('tracks/', views.track_list, name='track_list'),
@@ -32,5 +34,18 @@ urlpatterns = [
     path('playlists/<int:pk>/', views.playlist_detail, name='playlist_detail'),
     path('playlists/<int:pk>/edit/', views.playlist_edit, name='playlist_edit'),
     path('playlists/<int:pk>/delete/', views.playlist_delete, name='playlist_delete'),
-    path('add-track-to-playlist/', views.add_track_to_playlist, name='add_track_to_playlist'),
+    path('settings/', views.settings_view, name='settings'),
+    
+    # Альбомы
+    path('albums/', views.album_list, name='album_list'),
+    path('albums/create/', views.album_create, name='album_create'),
+    path('albums/<int:pk>/', views.album_detail, name='album_detail'),
+    path('albums/<int:pk>/edit/', views.album_edit, name='album_edit'),
+    path('albums/<int:pk>/delete/', views.album_delete, name='album_delete'),
+    
+    # API endpoints
+    path('api/tracks/<int:track_id>/increment_plays/', views.increment_play_count, name='increment_play_count'),
+    path('api/playlists/', views.get_playlists, name='get_playlists'),
+    path('api/playlists/<int:playlist_id>/add_track/', views.add_track_to_playlist, name='add_track_to_playlist'),
+    path('add-to-playlist/', views.add_to_playlist, name='add_to_playlist'),
 ] 

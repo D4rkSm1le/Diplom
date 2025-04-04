@@ -10,6 +10,7 @@ const volumeRange = document.getElementById('volumeRange');
 const progressBar = document.getElementById('progressBar');
 const currentTimeDisplay = document.getElementById('currentTime');
 const durationDisplay = document.getElementById('duration');
+const progressContainer = document.querySelector('.progress-container');
 
 let currentTrackId = null;
 let isRepeatEnabled = false;
@@ -108,4 +109,20 @@ audioPlayer.addEventListener('ended', () => {
     } else {
         nextTrack();
     }
+});
+
+function setProgress(e) {
+    const width = progressContainer.clientWidth;
+    const clickX = e.offsetX;
+    const duration = audioPlayer.duration;
+    audioPlayer.currentTime = (clickX / width) * duration;
+}
+
+progressContainer.addEventListener('click', setProgress);
+progressContainer.addEventListener('mousedown', () => {
+    progressContainer.addEventListener('mousemove', setProgress);
+    progressContainer.addEventListener('mouseup', () => {
+        progressContainer.removeEventListener('mousemove', setProgress);
+        progressContainer.removeEventListener('mouseup', () => {});
+    }, { once: true });
 }); 
