@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Отклонение трека - Музыкальный сервис{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title mb-0">Отклонение трека "{{ track.title }}"</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Информация о треке:</h5>
+                        <p>
+                            <strong>Название:</strong> {{ track.title }}<br>
+                            <strong>Исполнитель:</strong> {{ track.artist }}<br>
+                            {% if track.album %}
+                                <strong>Альбом:</strong> {{ track.album }}<br>
+                            {% endif %}
+                            <strong>Загружен:</strong> {{ track.created_at|date:"d.m.Y H:i" }}<br>
+                            <strong>Пользователь:</strong> {{ track.user.username }}
+                        </p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Комментарий для исполнителя:</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                            <div class="form-text">Укажите причину отклонения трека</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Отклонить трек
+                            </button>
+                            <a href="{% url 'music:moderation_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Вернуться к списку
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

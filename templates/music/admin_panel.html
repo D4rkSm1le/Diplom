@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель администратора - Музыкальный сервис{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Панель администратора</h1>
+
+    <div class="row">
+        <!-- Статистика -->
+        <div class="col-md-4 mb-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Треки на модерации</h5>
+                    <p class="card-text display-4">{{ pending_tracks_count }}</p>
+                    <a href="{% url 'music:moderation_list' %}" class="btn btn-light">Просмотреть</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Всего треков</h5>
+                    <p class="card-text display-4">{{ total_tracks_count }}</p>
+                    <a href="{% url 'admin:music_track_changelist' %}" class="btn btn-light">Управление треками</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Пользователи</h5>
+                    <p class="card-text display-4">{{ total_users_count }}</p>
+                    <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-light">Управление пользователями</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Последние треки на модерации -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Последние треки на модерации</h3>
+        </div>
+        <div class="card-body">
+            {% if pending_tracks %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Исполнитель</th>
+                                <th>Загружен</th>
+                                <th>Пользователь</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for track in pending_tracks %}
+                                <tr>
+                                    <td>{{ track.title }}</td>
+                                    <td>{{ track.artist }}</td>
+                                    <td>{{ track.created_at|date:"d.m.Y H:i" }}</td>
+                                    <td>{{ track.user.username }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <form method="post" action="{% url 'music:approve_track' track.pk %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success me-1">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            <a href="{% url 'music:reject_track' track.pk %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle"></i> Нет треков на модерации
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Быстрые действия -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Быстрые действия</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="{% url 'admin:index' %}" class="btn btn-primary btn-lg w-100 mb-3">
+                        <i class="fas fa-cogs"></i> Админ-панель Django
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'admin:music_track_changelist' %}" class="btn btn-info btn-lg w-100 mb-3">
+                        <i class="fas fa-music"></i> Управление треками
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-warning btn-lg w-100 mb-3">
+                        <i class="fas fa-users"></i> Управление пользователями
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

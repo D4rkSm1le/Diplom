@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Загрузка трека{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Загрузка трека</h2>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Загрузить
+                        </button>
+                        <a href="{% url 'music:track_list' %}" class="btn btn-secondary">
+                            Отмена
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Поиск в Disgen Music</h2>
+                    <div class="mb-3">
+                        <input type="text" id="searchQuery" class="form-control" placeholder="Введите название трека или исполнителя">
+                        <div class="form-text">Минимум 3 символа для поиска</div>
+                    </div>
+                    <div id="searchResults"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const searchInput = document.getElementById('searchQuery');
+const resultsDiv = document.getElementById('searchResults');
+let searchTimeout;
+
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length < 3) {
+        resultsDiv.innerHTML = '<div class="alert alert-info">Введите минимум 3 символа для поиска</div>';
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Загрузка...</span></div></div>';
+        
+        fetch(`{% url 'music:search_yandex_music' %}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.tracks && data.tracks.length > 0) {
+                    resultsDiv.innerHTML = data.tracks.map(track => `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h5 class="card-title">${track.title}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">${track.artist}</h6>
+                                ${track.album ? `<p class="card-text"><small>Альбом: ${track.album}</small></p>` : ''}
+                                <button onclick="addTrack('${track.id}', '${track.title.replace(/'/g, "\\'")}', '${track.artist.replace(/'/g, "\\'")}', '${track.album ? track.album.replace(/'/g, "\\'") : ''}')" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-plus"></i> Добавить
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    resultsDiv.innerHTML = '<div class="alert alert-warning">Ничего не найдено</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">Произошла ошибка при поиске</div>';
+            });
+    }, 500);
+});
+
+function addTrack(id, title, artist, album) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{% url 'music:track_upload' %}";
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const fields = {
+        'csrfmiddlewaretoken': csrfToken,
+        'title': title,
+        'artist': artist,
+        'album': album,
+        'disgen_music_id': id
+    };
+    
+    for (const [name, value] of Object.entries(fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %} 

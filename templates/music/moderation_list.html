@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Модерация треков - Музыкальный сервис{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Треки на модерации</h1>
+
+    {% if tracks %}
+        <div class="row">
+            {% for track in tracks %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                {% if track.cover %}
+                                    <img src="{{ track.cover.url }}" class="img-fluid rounded-start" alt="{{ track.title }}">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/150" class="img-fluid rounded-start" alt="Нет обложки">
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ track.title }}</h5>
+                                    <p class="card-text">
+                                        <strong>Исполнитель:</strong> {{ track.artist }}<br>
+                                        {% if track.album %}
+                                            <strong>Альбом:</strong> {{ track.album }}<br>
+                                        {% endif %}
+                                        <strong>Загружен:</strong> {{ track.created_at|date:"d.m.Y H:i" }}<br>
+                                        <strong>Пользователь:</strong> {{ track.user.username }}
+                                    </p>
+                                    <div class="d-flex gap-2">
+                                        <form method="post" action="{% url 'music:approve_track' track.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-check"></i> Одобрить
+                                            </button>
+                                        </form>
+                                        <a href="{% url 'music:reject_track' track.pk %}" class="btn btn-danger">
+                                            <i class="fas fa-times"></i> Отклонить
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Нет треков на модерации
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

@@ -1,0 +1,134 @@
+/* Стили для аудиоплеера */
+audio {
+    width: 250px;
+    height: 30px;
+}
+
+/* Настройка ползунка громкости */
+audio::-webkit-media-controls-volume-slider {
+    width: 50px;
+    height: 2px;
+}
+
+/* Настройка панели управления */
+audio::-webkit-media-controls-panel {
+    background-color: #f8f9fa;
+}
+
+/* Настройка кнопок управления */
+audio::-webkit-media-controls-play-button,
+audio::-webkit-media-controls-mute-button {
+    cursor: pointer;
+}
+
+/* Уменьшение размера полосы времени */
+audio::-webkit-media-controls-timeline {
+    height: 2px;
+}
+
+/* Стили для кнопок управления плеером */
+.player-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.player-controls button {
+    padding: 5px 10px;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+.player-controls button.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.audio-player-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Стили для плеера */
+.progress {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.progress-bar {
+    background-color: #fff;
+    transition: width 0.1s linear;
+}
+
+.progress:hover .progress-bar {
+    background-color: #1db954;
+}
+
+/* Стили для кнопок управления */
+.btn-link {
+    text-decoration: none;
+    padding: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.btn-link:hover {
+    transform: scale(1.1);
+    opacity: 1 !important;
+}
+
+/* Стили для регулятора громкости */
+.volume-slider {
+    position: relative;
+    margin-left: 10px;
+}
+
+.form-range {
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.form-range::-webkit-slider-thumb {
+    background-color: #fff;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -4px;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+/* Стили для активной кнопки повтора */
+#repeatButton.active {
+    color: #1db954 !important;
+    opacity: 1 !important;
+}
+
+/* Стили для обложки трека */
+#playerCover {
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Анимация для кнопки воспроизведения */
+#playPauseIcon {
+    transition: transform 0.2s ease;
+}
+
+.btn-link:hover #playPauseIcon {
+    transform: scale(1.1);
+}
+
+/* Стили для времени трека */
+#currentTime, #duration {
+    min-width: 45px;
+    text-align: center;
+} 

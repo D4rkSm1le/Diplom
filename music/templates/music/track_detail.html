@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load music_extras %}
+
+{% block title %}{{ track.title }} - {{ track.artist }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            {% if track.cover %}
+                <img src="{{ track.cover.url }}" class="card-img-top" alt="{{ track.title }}">
+            {% else %}
+                <img src="{% static 'images/default_cover.jpg' %}" class="card-img-top" alt="Default cover">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ track.title }}</h5>
+                <p class="card-text">
+                    <strong>Исполнитель:</strong> {{ track.artist }}<br>
+                    {% if track.album %}
+                        <strong>Альбом:</strong> {{ track.album }}<br>
+                    {% endif %}
+                    <strong>Длительность:</strong> {{ track.duration|format_duration }}<br>
+                    <strong>Добавлен:</strong> {{ track.created_at|date:"d.m.Y" }}
+                </p>
+                {% if track.audio_file %}
+                    <div class="audio-player">
+                        <audio id="audioPlayer" src="{{ track.audio_file.url }}"></audio>
+                        <div class="controls">
+                            <button id="playPauseBtn" class="btn btn-primary">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <div class="time-controls">
+                                <span id="currentTime">0:00</span>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <span id="duration">0:00</span>
+                            </div>
+                            <div class="volume-controls">
+                                <i class="fas fa-volume-up"></i>
+                                <input type="range" id="volumeSlider" min="0" max="100" value="100">
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Добавить в плейлист</h5>
+                {% if playlists %}
+                    <form method="post" action="{% url 'music:add_track_to_playlist' track.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <select name="playlist_id" class="form-select">
+                                <option value="">Выберите плейлист</option>
+                                {% for playlist in playlists %}
+                                    <option value="{{ playlist.pk }}">{{ playlist.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                    </form>
+                {% else %}
+                    <p>У вас пока нет плейлистов. <a href="{% url 'music:playlist_create' %}">Создайте плейлист</a></p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if track.disgen_music_id %}
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Информация из Disgen Music</h5>
+                    <p class="card-text">
+                        ID трека: {{ track.disgen_music_id }}
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.audio-player {
+    margin-top: 1rem;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.time-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.time-controls .progress {
+    flex: 1;
+    cursor: pointer;
+    height: 8px;
+}
+
+.volume-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.volume-controls input[type="range"] {
+    flex: 1;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const audio = document.getElementById('audioPlayer');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const progressBar = document.querySelector('.progress-bar');
+    const progress = document.querySelector('.progress');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const durationSpan = document.getElementById('duration');
+
+    // Play/Pause
+    playPauseBtn.addEventListener('click', function() {
+        if (audio.paused) {
+            audio.play();
+            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        } else {
+            audio.pause();
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        }
+    });
+
+    // Volume
+    volumeSlider.addEventListener('input', function() {
+        audio.volume = this.value / 100;
+    });
+
+    // Progress bar
+    audio.addEventListener('timeupdate', function() {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = percent + '%';
+        currentTimeSpan.textContent = formatTime(audio.currentTime);
+    });
+
+    // Click on progress bar
+    progress.addEventListener('click', function(e) {
+        const percent = e.offsetX / this.offsetWidth;
+        audio.currentTime = percent * audio.duration;
+    });
+
+    // Update duration
+    audio.addEventListener('loadedmetadata', function() {
+        durationSpan.textContent = formatTime(audio.duration);
+    });
+
+    // Format time function
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        seconds = Math.floor(seconds % 60);
+        return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+    }
+});
+</script>
+{% endblock %} 

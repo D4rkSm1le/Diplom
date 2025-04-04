@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load music_extras %}
+
+{% block title %}{{ track.title }} - Музыкальный сервис{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            {% if track.cover %}
+            <img src="{{ track.cover.url }}" class="card-img-top" alt="{{ track.title }}">
+            {% else %}
+            <img src="https://via.placeholder.com/400" class="card-img-top" alt="Нет обложки">
+            {% endif %}
+            <div class="card-body text-center">
+                <a href="{% url 'music:generate_qr' track.pk %}" class="btn btn-outline-primary mb-3">
+                    <i class="fas fa-qrcode"></i> Получить QR-код
+                </a>
+                {% if user.is_authenticated %}
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle w-100" type="button" id="addToPlaylistDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-plus"></i> Добавить в плейлист
+                    </button>
+                    <ul class="dropdown-menu w-100" aria-labelledby="addToPlaylistDropdown">
+                        {% for playlist in user_playlists %}
+                        <li>
+                            <button class="dropdown-item" onclick="addToPlaylist({{ track.pk }}, {{ playlist.pk }})">
+                                {{ playlist.name }}
+                            </button>
+                        </li>
+                        {% empty %}
+                        <li>
+                            <span class="dropdown-item text-muted">У вас пока нет плейлистов</span>
+                        </li>
+                        {% endfor %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'music:playlist_create' %}">
+                                <i class="fas fa-plus"></i> Создать новый плейлист
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">{{ track.title }}</h1>
+                <h2 class="card-subtitle mb-3 text-muted">{{ track.artist }}</h2>
+                
+                {% if track.album %}
+                <p class="card-text">
+                    <strong>Альбом:</strong> {{ track.album }}
+                </p>
+                {% endif %}
+                
+                <p class="card-text">
+                    <strong>Длительность:</strong> {{ track.duration|format_duration }}
+                </p>
+                
+                <p class="card-text">
+                    <strong>Добавлен:</strong> {{ track.created_at|date:"d.m.Y H:i" }}
+                </p>
+                
+                <p class="card-text">
+                    <strong>Прослушиваний:</strong> <span class="play-count">{{ track.play_count }}</span>
+                </p>
+                
+                {% if track.audio_file %}
+                <div class="mt-4">
+                    <audio controls class="w-100" id="audioPlayer">
+                        <source src="{{ track.audio_file.url }}" type="audio/mpeg">
+                        Ваш браузер не поддерживает аудио элемент.
+                    </audio>
+                </div>
+                {% endif %}
+                
+                {% if track.yandex_music_id %}
+                <div class="mt-4">
+                    <p class="text-muted">
+                        <i class="fab fa-yandex"></i> Трек доступен в Яндекс.Музыке
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if track.playlists.all %}
+        <div class="card mt-4">
+            <div class="card-body">
+                <h3 class="card-title">Плейлисты с этим треком</h3>
+                <div class="list-group">
+                    {% for playlist in track.playlists.all %}
+                    <a href="{% url 'music:playlist_detail' playlist.pk %}" class="list-group-item list-group-item-action">
+                        {{ playlist.title }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addToPlaylist(trackId, playlistId) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch("{% url 'music:add_track_to_playlist' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: `track_id=${trackId}&playlist_id=${playlistId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            // Показываем уведомление об успехе
+            const toast = document.createElement('div');
+            toast.className = 'position-fixed bottom-0 end-0 p-3';
+            toast.style.zIndex = '5';
+            toast.innerHTML = `
+                <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${data.message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            const toastEl = toast.querySelector('.toast');
+            const bsToast = new bootstrap.Toast(toastEl);
+            bsToast.show();
+            
+            // Закрываем выпадающее меню
+            const dropdownMenu = document.getElementById('addToPlaylistDropdown');
+            const bsDropdown = bootstrap.Dropdown.getInstance(dropdownMenu);
+            if (bsDropdown) {
+                bsDropdown.hide();
+            }
+        } else if (data.error) {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при добавлении трека в плейлист');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const audio = document.getElementById('audioPlayer');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const progressBar = document.querySelector('.progress-bar');
+    const progress = document.querySelector('.progress');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const durationSpan = document.getElementById('duration');
+
+    function incrementPlayCount() {
+        fetch(`/music/track/{{ track.id }}/increment-play-count/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.querySelector('.play-count').textContent = data.play_count;
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Play/Pause
+    playPauseBtn.addEventListener('click', function() {
+        if (audio.paused) {
+            audio.play();
+            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            // Увеличиваем счетчик прослушиваний при каждом воспроизведении
+            incrementPlayCount();
+        } else {
+            audio.pause();
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        }
+    });
+
+    // Добавляем обработчик события ended для аудиоплеера
+    audio.addEventListener('ended', function() {
+        // Проверяем, что трек не зациклен
+        if (!this.loop) {
+            incrementPlayCount(true);
+        }
+    });
+});
+</script>
+{% endblock %} 
