@@ -1,0 +1,141 @@
+/* Стили плеера */
+#player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #282828;
+    border-top: 1px solid #404040;
+    padding: 16px 0;
+    z-index: 1000;
+}
+
+.control-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.control-buttons button {
+    padding: 6px;
+}
+
+.control-buttons button:hover {
+    transform: scale(1.1);
+    opacity: 1 !important;
+}
+
+.control-buttons button.active {
+    color: #1db954 !important;
+    opacity: 1 !important;
+}
+
+.progress-container {
+    padding: 0 12px;
+    user-select: none;
+    margin-top: 2px;
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+}
+
+.progress {
+    background-color: #535353 !important;
+    height: 4px;
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    margin: 0 8px;
+    overflow: visible !important;
+    z-index: 2;
+    box-shadow: none !important;
+    background-image: none !important;
+    border: none !important;
+}
+
+.progress-bar {
+    background-color: #1db954 !important;
+    height: 100%;
+    border-radius: 2px;
+    position: relative;
+    transition: width 0.1s linear;
+    box-shadow: none !important;
+    background-image: none !important;
+    border: none !important;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    background-color: #fff;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 3;
+}
+
+.progress:hover .progress-bar::after,
+.progress.dragging .progress-bar::after {
+    opacity: 1;
+}
+
+.progress.dragging {
+    cursor: grabbing;
+}
+
+#currentTime,
+#duration {
+    position: relative;
+    z-index: 2;
+    min-width: 45px;
+    text-align: center;
+    background: transparent;
+}
+
+.volume-slider {
+    width: 100px;
+    padding: 8px 0;
+}
+
+#volumeSlider {
+    height: 4px;
+}
+
+#volumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 767.98px) {
+    .track-info {
+        max-width: 150px;
+    }
+    
+    #player {
+        padding: 12px 0;
+    }
+    
+    .volume-slider {
+        width: 60px;
+    }
+    
+    .control-buttons {
+        margin-top: 5px;
+    }
+    
+    .progress-container {
+        padding: 0 5px;
+    }
+} 
