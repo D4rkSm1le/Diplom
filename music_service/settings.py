@@ -71,6 +71,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'music.context_processors.pending_tracks_count',
+                'music.context_processors.support_tickets_count',
             ],
         },
     },

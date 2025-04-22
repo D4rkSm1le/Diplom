@@ -15,11 +15,23 @@
                 <div class="card-body">
                     <div class="mb-4">
                         <form method="get" class="form-inline">
-                            <div class="input-group">
+                            <div class="input-group mb-3">
                                 <input type="text" name="q" class="form-control" placeholder="Поиск треков..." value="{{ request.GET.q }}">
                                 <button class="btn btn-primary" type="submit">
                                     <i class="fas fa-search"></i>
                                 </button>
+                            </div>
+                            
+                            <div class="btn-group mb-3" role="group">
+                                <a href="?sort=recent" class="btn btn-outline-primary {% if current_sort == 'recent' %}active{% endif %}">
+                                    <i class="fas fa-clock"></i> Недавно добавленные
+                                </a>
+                                <a href="?sort=popular" class="btn btn-outline-primary {% if current_sort == 'popular' %}active{% endif %}">
+                                    <i class="fas fa-fire"></i> Популярные
+                                </a>
+                                <a href="?sort=alphabetical" class="btn btn-outline-primary {% if current_sort == 'alphabetical' %}active{% endif %}">
+                                    <i class="fas fa-sort-alpha-down"></i> По алфавиту
+                                </a>
                             </div>
                         </form>
                     </div>
@@ -242,48 +254,60 @@
     opacity: 1 !important;
 }
 
+.progress-container {
+    padding: 0 12px;
+    user-select: none;
+    margin-top: 2px;
+    position: relative;
+    z-index: 1;
+    background: transparent;
+}
+
 .progress {
     background-color: #535353;
-    height: 6px;
-    border-radius: 3px;
+    height: 4px;
+    border-radius: 2px;
     cursor: pointer;
     position: relative;
     margin: 0 8px;
+    overflow: visible !important;
+    z-index: 2;
+    box-shadow: none;
+    background-image: none;
 }
 
 .progress-bar {
     background-color: #1db954;
     height: 100%;
-    border-radius: 3px;
-    transition: width 0.1s linear;
+    border-radius: 2px;
     position: relative;
+    transition: width 0.1s linear;
+    box-shadow: none;
+    background-image: none;
 }
 
-.progress-bar::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    background-color: #fff;
-    border-radius: 50%;
-    top: 50%;
-    right: -8px;
-    transform: translateY(-50%);
-    opacity: 0;
-    transition: opacity 0.2s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+#currentTime,
+#duration {
+    position: relative;
+    z-index: 2;
+    min-width: 45px;
+    text-align: center;
+    background: transparent;
 }
 
-.progress:hover .progress-bar::after,
-.progress.dragging .progress-bar::after,
-.progress.active .progress-bar::after {
-    opacity: 1;
+/* Сброс стилей Bootstrap для прогресс-бара */
+.progress,
+.progress-bar {
+    -webkit-box-shadow: none;
+    box-shadow: none;
 }
 
-.progress-container {
-    padding: 0 12px;
-    user-select: none;
-    margin-top: 2px;
+.progress {
+    background-color: #535353;
+}
+
+.progress-bar {
+    background-color: #1db954;
 }
 
 .volume-slider {
@@ -408,6 +432,50 @@
         flex: 0 0 32%;
     }
 }
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    background-color: #fff;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 3;
+}
+
+.progress:hover .progress-bar::after,
+.progress.dragging .progress-bar::after {
+    opacity: 1;
+}
+
+.progress.dragging {
+    cursor: grabbing;
+}
+
+/* Дополнительные стили для устранения фоновой полосы */
+.progress,
+.progress-bar {
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.progress {
+    background-color: #535353 !important;
+}
+
+.progress-bar {
+    background-color: #1db954 !important;
+}
+
+.progress-container {
+    background: transparent !important;
+}
 </style>
 
 {% block extra_js %}
@@ -442,6 +510,7 @@ function initializePlaylist() {
 }
 
 function formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
     const minutes = Math.floor(seconds / 60);
     seconds = Math.floor(seconds % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -449,11 +518,10 @@ function formatTime(seconds) {
 
 function updateProgress() {
     if (audioPlayer.duration) {
-        const progressValue = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        progressBar.style.width = `${progressValue}%`;
-        progressBar.style.setProperty('--progress-position', `${progressValue}%`);
-        currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
-        durationSpan.textContent = formatTime(audioPlayer.duration);
+        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        document.querySelector('.progress-bar').style.width = `${progress}%`;
+        document.getElementById('currentTime').textContent = formatTime(audioPlayer.currentTime);
+        document.getElementById('duration').textContent = formatTime(audioPlayer.duration);
     }
 }
 
@@ -686,26 +754,20 @@ function updateProgressFromMouse(e) {
     const pos = Math.min(Math.max(0, e.clientX - rect.left), rect.width) / rect.width;
     if (audioPlayer.duration) {
         audioPlayer.currentTime = pos * audioPlayer.duration;
+        updateProgress();
     }
 }
 
-// Показываем точку во время воспроизведения
-audioPlayer.addEventListener('play', () => {
-    progress.classList.add('active');
-});
-
-audioPlayer.addEventListener('pause', () => {
-    progress.classList.remove('active');
-});
-
 // Event Listeners
 audioPlayer.addEventListener('timeupdate', updateProgress);
+audioPlayer.addEventListener('loadedmetadata', updateProgress);
 
 progress.addEventListener('click', function(e) {
     const rect = progress.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
     if (audioPlayer.duration) {
         audioPlayer.currentTime = pos * audioPlayer.duration;
+        updateProgress();
     }
 });
 

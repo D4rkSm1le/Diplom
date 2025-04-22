@@ -1,0 +1,377 @@
+# ПОЛНЫЙ КОД ПРОГРАММЫ "ЛИЧНЫЙ МУЗЫКАЛЬНЫЙ СЕРВИС"
+
+## СОДЕРЖАНИЕ
+1. Backend (Python/Django)
+2. Frontend (HTML/CSS/JavaScript)
+3. Templates
+4. Static Files
+
+## 1. Backend (Python/Django)
+
+[Здесь содержится весь код из предыдущего файла full_code.txt]
+
+## 2. Frontend (HTML/CSS/JavaScript)
+
+### 2.1. HTML Templates
+
+#### base.html
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DisgenMusic{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">DisgenMusic</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'albums' %}">Альбомы</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'playlists' %}">Плейлисты</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <a class="nav-link" href="{% url 'profile' %}">Профиль</a>
+                        <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
+                    {% else %}
+                        <a class="nav-link" href="{% url 'login' %}">Войти</a>
+                        <a class="nav-link" href="{% url 'register' %}">Регистрация</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="footer mt-5 py-3 bg-dark text-white">
+        <div class="container text-center">
+            <span>© 2024 DisgenMusic</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>
+```
+
+#### home.html
+```html
+{% extends 'base.html' %}
+
+{% block title %}Главная - DisgenMusic{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Последние альбомы</h2>
+        <div class="row">
+            {% for album in albums %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="{{ album.cover.url }}" class="card-img-top" alt="{{ album.title }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ album.title }}</h5>
+                        <p class="card-text">{{ album.artist }}</p>
+                        <a href="{% url 'album_detail' album.id %}" class="btn btn-primary">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <h2>Мои плейлисты</h2>
+        <div class="list-group">
+            {% for playlist in playlists %}
+            <a href="{% url 'playlist_detail' playlist.id %}" class="list-group-item list-group-item-action">
+                {{ playlist.title }}
+            </a>
+            {% endfor %}
+        </div>
+        <a href="{% url 'create_playlist' %}" class="btn btn-success mt-3">Создать плейлист</a>
+    </div>
+</div>
+{% endblock %}
+```
+
+#### album_detail.html
+```html
+{% extends 'base.html' %}
+
+{% block title %}{{ album.title }} - DisgenMusic{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <img src="{{ album.cover.url }}" class="img-fluid" alt="{{ album.title }}">
+    </div>
+    <div class="col-md-8">
+        <h1>{{ album.title }}</h1>
+        <h2>{{ album.artist }}</h2>
+        <p>Дата выпуска: {{ album.release_date }}</p>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h3>Треки</h3>
+    <div class="list-group">
+        {% for track in tracks %}
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1">{{ track.title }}</h5>
+                    <small>Длительность: {{ track.duration }}</small>
+                </div>
+                <div>
+                    <button class="btn btn-primary play-track" data-track-id="{{ track.id }}">
+                        Воспроизвести
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+```
+
+### 2.2. CSS (style.css)
+```css
+/* Основные стили */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Навигация */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+/* Карточки альбомов */
+.card {
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Плейлисты */
+.list-group-item {
+    border: none;
+    margin-bottom: 5px;
+    border-radius: 5px !important;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Аудиоплеер */
+.audio-player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    padding: 15px;
+    box-shadow: 0 -2px 4px rgba(0,0,0,.1);
+    z-index: 1000;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .card-img-top {
+        height: 150px;
+    }
+}
+```
+
+### 2.3. JavaScript (main.js)
+```javascript
+// Аудиоплеер
+class AudioPlayer {
+    constructor() {
+        this.audio = new Audio();
+        this.currentTrack = null;
+        this.isPlaying = false;
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        document.querySelectorAll('.play-track').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const trackId = e.target.dataset.trackId;
+                this.playTrack(trackId);
+            });
+        });
+
+        this.audio.addEventListener('ended', () => {
+            this.playNextTrack();
+        });
+    }
+
+    async playTrack(trackId) {
+        try {
+            const response = await fetch(`/api/tracks/${trackId}/`);
+            const track = await response.json();
+            
+            this.currentTrack = track;
+            this.audio.src = track.audio_file;
+            this.audio.play();
+            this.isPlaying = true;
+            this.updatePlayerUI();
+        } catch (error) {
+            console.error('Ошибка при воспроизведении трека:', error);
+        }
+    }
+
+    updatePlayerUI() {
+        const player = document.querySelector('.audio-player');
+        if (player) {
+            player.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5>${this.currentTrack.title}</h5>
+                        <p>${this.currentTrack.artist}</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" id="playPauseBtn">
+                            ${this.isPlaying ? 'Пауза' : 'Воспроизвести'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('playPauseBtn').addEventListener('click', () => {
+                this.togglePlayPause();
+            });
+        }
+    }
+
+    togglePlayPause() {
+        if (this.isPlaying) {
+            this.audio.pause();
+        } else {
+            this.audio.play();
+        }
+        this.isPlaying = !this.isPlaying;
+        this.updatePlayerUI();
+    }
+
+    playNextTrack() {
+        // Реализация воспроизведения следующего трека
+    }
+}
+
+// Инициализация плеера при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    window.audioPlayer = new AudioPlayer();
+});
+
+// Обработка форм
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Ошибка при отправке формы');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+        }
+    });
+});
+```
+
+### 2.4. API Endpoints (api.py)
+```python
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import Album, Track, Playlist
+from .serializers import AlbumSerializer, TrackSerializer, PlaylistSerializer
+
+class AlbumViewSet(viewsets.ModelViewSet):
+    queryset = Album.objects.all()
+    serializer_class = AlbumSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class TrackViewSet(viewsets.ModelViewSet):
+    queryset = Track.objects.all()
+    serializer_class = TrackSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=True, methods=['post'])
+    def increment_play_count(self, request, pk=None):
+        track = self.get_object()
+        track.play_count += 1
+        track.save()
+        return Response({'status': 'success'})
+
+class PlaylistViewSet(viewsets.ModelViewSet):
+    queryset = Playlist.objects.all()
+    serializer_class = PlaylistSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Playlist.objects.filter(user=self.request.user)
+```
+
+### 2.5. Serializers (serializers.py)
+```python
+from rest_framework import serializers
+from .models import Album, Track, Playlist
+
+class AlbumSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Album
+        fields = ['id', 'title', 'artist', 'cover', 'release_date']
+
+class TrackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Track
+        fields = ['id', 'title', 'album', 'audio_file', 'duration', 'play_count']
+
+class PlaylistSerializer(serializers.ModelSerializer):
+    tracks = TrackSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Playlist
+        fields = ['id', 'title', 'user', 'tracks']
+``` 

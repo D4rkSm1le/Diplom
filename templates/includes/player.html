@@ -1,0 +1,63 @@
+<!-- Аудиоплеер -->
+<div id="player" style="display: none;">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <!-- Информация о треке -->
+            <div class="col-md-3 col-sm-12 mb-2 mb-md-0">
+                <div class="d-flex align-items-center">
+                    <img id="playerCover" src="" alt="Track cover" class="me-3" style="width: 48px; height: 48px; border-radius: 4px;">
+                    <div class="track-info overflow-hidden">
+                        <div id="playerTitle" class="text-white text-truncate" style="font-size: 0.95rem; font-weight: 500;"></div>
+                        <div id="playerArtist" class="text-white-50 text-truncate" style="font-size: 0.85rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Управление воспроизведением -->
+            <div class="col-md-6 col-sm-12 mb-2 mb-md-0">
+                <div class="d-flex flex-column align-items-center">
+                    <!-- Кнопки управления -->
+                    <div class="control-buttons mb-2">
+                        <button id="prevButton" class="btn btn-link text-white mx-1 mx-md-2" style="opacity: 0.7;" onclick="playPreviousTrack()">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button id="playPauseButton" class="btn btn-link text-white mx-2 mx-md-3" onclick="togglePlay()">
+                            <i id="playPauseIcon" class="fas fa-play fa-lg"></i>
+                        </button>
+                        <button id="nextButton" class="btn btn-link text-white mx-1 mx-md-2" style="opacity: 0.7;" onclick="playNextTrack()">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                        <button id="shuffleButton" class="btn btn-link text-white mx-1 mx-md-2" style="opacity: 0.7;">
+                            <i class="fas fa-random"></i>
+                        </button>
+                        <button id="repeatButton" class="btn btn-link text-white mx-1 mx-md-2" style="opacity: 0.7;">
+                            <i class="fas fa-redo-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Прогресс-бар -->
+                    <div class="progress-container d-flex align-items-center w-100">
+                        <span id="currentTime" class="text-white-50 me-2">0:00</span>
+                        <div class="progress flex-grow-1" id="progressBar">
+                            <div class="progress-bar" role="progressbar"></div>
+                        </div>
+                        <span id="duration" class="text-white-50 ms-2">0:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Управление громкостью -->
+            <div class="col-md-3 col-sm-12">
+                <div class="d-flex align-items-center justify-content-center justify-content-md-end">
+                    <button id="volumeButton" class="btn btn-link text-white me-2" style="opacity: 0.7;" onclick="toggleMute()">
+                        <i id="volumeIcon" class="fas fa-volume-up"></i>
+                    </button>
+                    <div class="volume-slider" style="width: 80px; max-width: 100%;">
+                        <input type="range" class="form-range" id="volumeSlider" min="0" max="100" value="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <audio id="audioPlayer"></audio>
+</div> 

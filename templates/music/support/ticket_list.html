@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Техническая поддержка{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Техническая поддержка</h1>
+        <a href="{% url 'music:support_ticket_create' %}" class="btn btn-custom">
+            <i class="fas fa-plus"></i> Создать тикет
+        </a>
+    </div>
+
+    {% if tickets %}
+        <div class="row">
+            {% for ticket in tickets %}
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ ticket.subject }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    Статус: 
+                                    <span class="badge {% if ticket.status == 'open' %}bg-success{% elif ticket.status == 'in_progress' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ ticket.get_status_display }}
+                                    </span>
+                                </small>
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    Создан: {{ ticket.created_at|date:"d.m.Y H:i" }}
+                                </small>
+                            </p>
+                            <a href="{% url 'music:support_ticket_detail' ticket.pk %}" class="btn btn-outline-custom">
+                                Просмотреть
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            У вас пока нет тикетов. Создайте новый тикет, если у вас есть вопросы.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

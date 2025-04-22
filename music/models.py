@@ -128,3 +128,40 @@ class UserLog(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.action} ({self.created_at})"
+
+class SupportTicket(models.Model):
+    STATUS_CHOICES = (
+        ('open', 'Открыт'),
+        ('in_progress', 'В работе'),
+        ('closed', 'Закрыт'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='support_tickets')
+    subject = models.CharField(max_length=200, verbose_name='Тема')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open', verbose_name='Статус')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлен')
+    is_read_by_admin = models.BooleanField(default=False, verbose_name='Прочитано администратором')
+
+    class Meta:
+        verbose_name = 'Тикет поддержки'
+        verbose_name_plural = 'Тикеты поддержки'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f'Тикет #{self.id} от {self.user.username}'
+
+class SupportMessage(models.Model):
+    ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name='messages')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='support_messages', null=True, blank=True)
+    message = models.TextField(verbose_name='Сообщение')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
+    is_read = models.BooleanField(default=False, verbose_name='Прочитано')
+
+    class Meta:
+        verbose_name = 'Сообщение поддержки'
+        verbose_name_plural = 'Сообщения поддержки'
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'Сообщение в тикете #{self.ticket.id} от {self.user.username if self.user else "Система"}'

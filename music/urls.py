@@ -48,4 +48,11 @@ urlpatterns = [
     path('api/playlists/', views.get_playlists, name='get_playlists'),
     path('api/playlists/<int:playlist_id>/add_track/', views.add_track_to_playlist, name='add_track_to_playlist'),
     path('add-to-playlist/', views.add_to_playlist, name='add_to_playlist'),
+    
+    # Техническая поддержка
+    path('support/', views.support_ticket_list, name='support_ticket_list'),
+    path('support/create/', views.support_ticket_create, name='support_ticket_create'),
+    path('support/<int:pk>/', views.support_ticket_detail, name='support_ticket_detail'),
+    path('support/<int:pk>/update-status/', views.support_ticket_update_status, name='support_ticket_update_status'),
+    path('support/<int:ticket_id>/get-new-messages/', views.get_new_messages, name='get_new_messages'),
 ] 

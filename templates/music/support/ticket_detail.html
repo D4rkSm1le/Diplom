@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Тикет #{{ ticket.id }} - {{ ticket.subject }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">{{ ticket.subject }}</h2>
+                    <span class="badge {% if ticket.status == 'open' %}bg-success{% elif ticket.status == 'in_progress' %}bg-warning{% else %}bg-secondary{% endif %}">
+                        {{ ticket.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div id="messages-container" class="mb-4">
+                        {% for message in messages %}
+                            <div class="message mb-3 {% if message.user == request.user %}text-end{% endif %}" data-message-id="{{ message.id }}">
+                                <div class="d-flex {% if message.user == request.user %}justify-content-end{% endif %}">
+                                    <div class="message-content p-3 rounded {% if message.user == request.user %}bg-primary text-white{% else %}bg-light{% endif %}" style="max-width: 70%;">
+                                        <div class="message-header mb-2">
+                                            <small class="text-muted {% if message.user == request.user %}text-white-50{% endif %}">
+                                                {{ message.user.username }} - {{ message.created_at|date:"d.m.Y H:i" }}
+                                            </small>
+                                        </div>
+                                        <div class="message-text">
+                                            {{ message.message|linebreaks }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <form id="message-form" class="mt-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea class="form-control" id="message" name="message" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-custom">Отправить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Информация о тикете</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Создан:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Последнее обновление:</strong> {{ ticket.updated_at|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Автор:</strong> {{ ticket.user.username }}</p>
+                    
+                    {% if user.is_superuser %}
+                        <hr>
+                        <h4>Управление тикетом</h4>
+                        <form method="post" action="{% url 'music:support_ticket_update_status' ticket.pk %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Статус</label>
+                                <select class="form-select" id="status" name="status">
+                                    {% for status_value, status_label in ticket.STATUS_CHOICES %}
+                                        <option value="{{ status_value }}" {% if ticket.status == status_value %}selected{% endif %}>
+                                            {{ status_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-custom">Обновить статус</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messagesContainer = document.getElementById('messages-container');
+    const messageForm = document.getElementById('message-form');
+    let lastMessageId = 0;
+    let isSubmitting = false;
+
+    const messages = document.querySelectorAll('.message');
+    if (messages.length > 0) {
+        lastMessageId = parseInt(messages[messages.length - 1].dataset.messageId);
+    }
+
+    function addMessage(message) {
+        if (document.querySelector(`.message[data-message-id="${message.id}"]`)) {
+            return;
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message mb-3 ${message.user === '{{ request.user.username }}' ? 'text-end' : ''}`;
+        messageDiv.dataset.messageId = message.id;
+
+        const messageContent = `
+            <div class="d-flex ${message.user === '{{ request.user.username }}' ? 'justify-content-end' : ''}">
+                <div class="message-content p-3 rounded ${message.user === '{{ request.user.username }}' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 70%;">
+                    <div class="message-header mb-2">
+                        <small class="text-muted ${message.user === '{{ request.user.username }}' ? 'text-white-50' : ''}">
+                            ${message.user} - ${message.created_at}
+                        </small>
+                    </div>
+                    <div class="message-text">
+                        ${message.message.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        messageDiv.innerHTML = messageContent;
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        lastMessageId = Math.max(lastMessageId, message.id);
+    }
+
+    messageForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (isSubmitting) return;
+
+        const messageInput = document.getElementById('message');
+        const message = messageInput.value.trim();
+        
+        if (!message) return;
+
+        try {
+            isSubmitting = true;
+            const submitButton = messageForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+
+            const response = await fetch('{% url "music:support_ticket_detail" ticket.pk %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: `message=${encodeURIComponent(message)}`
+            });
+
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                messageInput.value = '';
+                addMessage({
+                    id: data.message_id,
+                    user: '{{ request.user.username }}',
+                    message: message,
+                    created_at: new Date().toLocaleString('ru-RU')
+                });
+            } else {
+                throw new Error(data.error || 'Ошибка при отправке сообщения');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при отправке сообщения. Пожалуйста, попробуйте еще раз.');
+        } finally {
+            isSubmitting = false;
+            messageForm.querySelector('button[type="submit"]').disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %} 

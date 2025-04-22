@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib.auth.views import LogoutView, LoginView
 from django.contrib.auth.models import User
-from .models import Track, Playlist, PlaylistTrack, UserProfile, UserLog, Album
+from .models import Track, Playlist, PlaylistTrack, UserProfile, UserLog, Album, SupportTicket, SupportMessage
 from .forms import TrackUploadForm, PlaylistForm, UserRegistrationForm, UserUpdateForm, AdminTrackForm, AlbumForm, TrackFormSet
 import logging
 from mutagen import File
@@ -24,6 +24,7 @@ from django.db import transaction
 from datetime import timedelta
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db import connection
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -152,20 +153,20 @@ def track_list(request):
         tracks = tracks.order_by('-play_count', '-created_at')
     elif sort_by == 'alphabetical':
         tracks = tracks.order_by('title', 'artist')
-    elif sort_by == 'album':  # Сортировка по альбомам и названиям треков
-        tracks = tracks.order_by('album__title', 'title')
     else:  # 'recent' - сортировка по дате добавления (по умолчанию)
         tracks = tracks.order_by('-created_at')
     
     # Получаем плейлисты пользователя
     user_playlists = Playlist.objects.filter(user=request.user) if request.user.is_authenticated else []
     
-    return render(request, 'music/track_list.html', {
+    context = {
         'tracks': tracks,
         'user_playlists': user_playlists,
         'current_sort': sort_by,
         'query': query
-    })
+    }
+    
+    return render(request, 'music/track_list.html', context)
 
 @login_required
 def track_detail(request, pk):
@@ -638,3 +639,101 @@ def add_to_playlist(request):
             messages.error(request, 'Ошибка при добавлении трека в плейлист')
             
     return redirect(request.META.get('HTTP_REFERER', 'music:track_list'))
+
+@login_required
+def support_ticket_list(request):
+    """Список тикетов пользователя или все тикеты для админа"""
+    if request.user.is_superuser:
+        tickets = SupportTicket.objects.all()
+    else:
+        tickets = SupportTicket.objects.filter(user=request.user)
+    return render(request, 'music/support/ticket_list.html', {'tickets': tickets})
+
+@login_required
+def support_ticket_create(request):
+    """Создание нового тикета"""
+    if request.method == 'POST':
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+        if subject and message:
+            ticket = SupportTicket.objects.create(
+                user=request.user,
+                subject=subject
+            )
+            SupportMessage.objects.create(
+                ticket=ticket,
+                user=request.user,
+                message=message
+            )
+            messages.success(request, 'Тикет успешно создан')
+            return redirect('music:support_ticket_detail', pk=ticket.pk)
+    return render(request, 'music/support/ticket_create.html')
+
+@login_required
+def support_ticket_detail(request, pk):
+    """Детальная информация о тикете"""
+    ticket = get_object_or_404(SupportTicket, pk=pk)
+    if not request.user.is_superuser and ticket.user != request.user:
+        messages.error(request, 'У вас нет доступа к этому тикету')
+        return redirect('music:support_ticket_list')
+    
+    if request.method == 'POST':
+        message_text = request.POST.get('message')
+        if message_text:
+            # Удаляем все предыдущие сообщения
+            ticket.messages.all().delete()
+            
+            # Создаем новое сообщение
+            message = SupportMessage.objects.create(
+                ticket=ticket,
+                user=request.user,
+                message=message_text
+            )
+            ticket.updated_at = timezone.now()
+            ticket.save()
+            return JsonResponse({
+                'status': 'success',
+                'message_id': message.id
+            })
+        return JsonResponse({'status': 'error', 'error': 'Сообщение не может быть пустым'})
+    
+    # Получаем только последнее сообщение
+    last_message = ticket.messages.last()
+    messages_list = [last_message] if last_message else []
+    
+    return render(request, 'music/support/ticket_detail.html', {
+        'ticket': ticket,
+        'messages': messages_list
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def support_ticket_update_status(request, pk):
+    """Обновление статуса тикета (только для админа)"""
+    ticket = get_object_or_404(SupportTicket, pk=pk)
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in dict(SupportTicket.STATUS_CHOICES):
+            ticket.status = new_status
+            ticket.save()
+            messages.success(request, 'Статус тикета обновлен')
+    return redirect('music:support_ticket_detail', pk=pk)
+
+@login_required
+def get_new_messages(request, ticket_id):
+    """Получение новых сообщений для тикета (AJAX)"""
+    ticket = get_object_or_404(SupportTicket, pk=ticket_id)
+    if not request.user.is_superuser and ticket.user != request.user:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    last_message_id = request.GET.get('last_message_id', 0)
+    new_messages = ticket.messages.filter(id__gt=last_message_id)
+    
+    messages_data = [{
+        'id': msg.id,
+        'user': msg.user.username,
+        'message': msg.message,
+        'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    } for msg in new_messages]
+    
+    return JsonResponse({'messages': messages_data})
