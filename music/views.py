@@ -680,10 +680,6 @@ def support_ticket_detail(request, pk):
     if request.method == 'POST':
         message_text = request.POST.get('message')
         if message_text:
-            # Удаляем все предыдущие сообщения
-            ticket.messages.all().delete()
-            
-            # Создаем новое сообщение
             message = SupportMessage.objects.create(
                 ticket=ticket,
                 user=request.user,
@@ -697,13 +693,10 @@ def support_ticket_detail(request, pk):
             })
         return JsonResponse({'status': 'error', 'error': 'Сообщение не может быть пустым'})
     
-    # Получаем только последнее сообщение
-    last_message = ticket.messages.last()
-    messages_list = [last_message] if last_message else []
-    
+    messages = ticket.messages.all()
     return render(request, 'music/support/ticket_detail.html', {
         'ticket': ticket,
-        'messages': messages_list
+        'messages': messages
     })
 
 @login_required
