@@ -37,7 +37,8 @@
                                             <span class="badge bg-success">Одобрен</span>
                                         {% else %}
                                             <span class="badge bg-warning">На модерации</span>
-                                        {% endif %}
+                                        {% endif %}<br>
+                                        <strong>Прослушиваний:</strong> <span class="badge bg-primary"><i class="fas fa-play"></i> {{ track.play_count }}</span>
                                     </p>
                                     {% if not track.is_approved and track.moderation_comment %}
                                         <div class="alert alert-warning">

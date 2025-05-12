@@ -3,7 +3,7 @@ let audioPlayer = document.getElementById('audioPlayer');
 let player = document.getElementById('player');
 let playPauseButton = document.getElementById('playPauseButton');
 let playPauseIcon = document.getElementById('playPauseIcon');
-let progressBar = document.querySelector('.progress-bar');
+let progressBar = document.querySelector('.progress');
 let progress = document.getElementById('progressBar');
 let currentTimeSpan = document.getElementById('currentTime');
 let durationSpan = document.getElementById('duration');
@@ -81,39 +81,53 @@ function toggleMute() {
     updateVolumeIcon(audioPlayer.volume);
 }
 
-// Управление перемоткой
+// Обработка перемотки трека
+const progressBar = document.querySelector('.progress');
 let isDragging = false;
 
-progress.addEventListener('mousedown', function(e) {
+progressBar.addEventListener('mousedown', function(e) {
     isDragging = true;
-    progress.classList.add('dragging');
     wasPlaying = !audioPlayer.paused;
-    if (wasPlaying) audioPlayer.pause();
-    updateProgressFromMouse(e);
-});
-
-document.addEventListener('mousemove', function(e) {
-    if (isDragging) {
-        updateProgressFromMouse(e);
+    if (wasPlaying) {
+        audioPlayer.pause();
     }
+    handleProgressBarInteraction(e);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
 });
 
-document.addEventListener('mouseup', function() {
+function handleMouseMove(e) {
+    if (isDragging) {
+        handleProgressBarInteraction(e);
+    }
+}
+
+function handleMouseUp() {
     if (isDragging) {
         isDragging = false;
-        progress.classList.remove('dragging');
-        if (wasPlaying) audioPlayer.play();
+        if (wasPlaying) {
+            audioPlayer.play();
+        }
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
     }
-});
+}
 
-function updateProgressFromMouse(e) {
-    const rect = progress.getBoundingClientRect();
-    const pos = Math.min(Math.max(0, e.clientX - rect.left), rect.width) / rect.width;
+function handleProgressBarInteraction(e) {
+    const rect = progressBar.getBoundingClientRect();
+    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     if (audioPlayer.duration) {
         audioPlayer.currentTime = pos * audioPlayer.duration;
         updateProgress();
     }
 }
+
+// Обработка клика по прогресс-бару
+progressBar.addEventListener('click', function(e) {
+    if (!isDragging) {
+        handleProgressBarInteraction(e);
+    }
+});
 
 // Инициализация плеера
 document.addEventListener('DOMContentLoaded', () => {

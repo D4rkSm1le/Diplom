@@ -81,6 +81,7 @@ class Track(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     is_approved = models.BooleanField(default=False, verbose_name='Одобрен')
     moderation_comment = models.TextField(null=True, blank=True, verbose_name='Комментарий модератора')
+    is_explicit = models.BooleanField(default=False, verbose_name='Есть цензура')
 
     class Meta:
         verbose_name = 'Трек'

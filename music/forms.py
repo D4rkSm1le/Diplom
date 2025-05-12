@@ -7,7 +7,7 @@ class TrackUploadForm(forms.ModelForm):
     """Форма для загрузки трека"""
     class Meta:
         model = Track
-        fields = ['title', 'artist', 'album', 'audio_file', 'cover']
+        fields = ['title', 'artist', 'album', 'audio_file', 'cover', 'is_explicit']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -29,13 +29,17 @@ class TrackUploadForm(forms.ModelForm):
                 'class': 'form-control',
                 'accept': 'image/*'
             }),
+            'is_explicit': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
         labels = {
             'title': 'Название трека',
             'artist': 'Исполнитель',
             'album': 'Альбом',
             'audio_file': 'Аудиофайл (MP3 или WAV)',
-            'cover': 'Обложка (изображение)'
+            'cover': 'Обложка (изображение)',
+            'is_explicit': 'В треке есть цензура',
         }
         help_texts = {
             'audio_file': 'Поддерживаются форматы MP3 и WAV',

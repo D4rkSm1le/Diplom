@@ -21,10 +21,11 @@ from django.db.models import Q, F
 from .utils import create_backup, restore_backup
 import os
 from django.db import transaction
-from datetime import timedelta
+from datetime import timedelta, date
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db import connection
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
 
@@ -168,11 +169,33 @@ def track_list(request):
     
     return render(request, 'music/track_list.html', context)
 
+def check_age_restriction(user, track):
+    """Проверяет, может ли пользователь получить доступ к треку с цензурой"""
+    if not track.is_explicit:
+        return True
+        
+    if not user.is_authenticated:
+        return False
+        
+    try:
+        profile = user.profile
+        if not profile.birth_date:
+            return False
+            
+        today = date.today()
+        age = today.year - profile.birth_date.year - ((today.month, today.day) < (profile.birth_date.month, profile.birth_date.day))
+        return age >= 18
+    except UserProfile.DoesNotExist:
+        return False
+
 @login_required
 def track_detail(request, pk):
     """Детальная информация о треке"""
     track = get_object_or_404(Track, pk=pk)
-    print(f"Track duration: {track.duration}, type: {type(track.duration)}")  # Отладочная информация
+    
+    if not check_age_restriction(request.user, track):
+        raise PermissionDenied("Вам должно быть 18 лет для доступа к этому треку")
+        
     user_playlists = Playlist.objects.filter(user=request.user)
     return render(request, 'music/track_detail.html', {
         'track': track,
@@ -730,3 +753,7 @@ def get_new_messages(request, ticket_id):
     } for msg in new_messages]
     
     return JsonResponse({'messages': messages_data})
+
+def permission_denied_view(request, exception):
+    """Представление для обработки ошибки 403 (доступ запрещен)"""
+    return render(request, '403.html', {'exception': str(exception)}, status=403)

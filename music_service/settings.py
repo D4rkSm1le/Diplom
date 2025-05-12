@@ -160,3 +160,6 @@ LOGIN_REQUIRED_IGNORE_VIEW_NAMES = [
     'music:login',
     'music:register',
 ]
+
+# Настройки обработки ошибок
+handler403 = 'music.views.permission_denied_view'

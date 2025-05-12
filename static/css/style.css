@@ -56,23 +56,51 @@ audio::-webkit-media-controls-timeline {
 .progress, .progress-container, .track-progress {
     cursor: pointer;
     position: relative;
-    height: 8px;
-    border-radius: 4px;
+    height: 4px;
+    border-radius: 2px;
     overflow: visible;
     z-index: 10;
     margin: 10px 0;
     background-color: rgba(255, 255, 255, 0.1);
+    touch-action: none;
 }
 
 .progress-bar {
     position: relative;
     height: 100%;
     transition: width 0.1s linear;
-    background-color: #fff;
+    background-color: #1db954;
+    border-radius: 2px;
 }
 
-.progress:hover .progress-bar {
-    background-color: #1db954;
+.progress:hover .progress-bar::after,
+.progress.dragging .progress-bar::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    background-color: #fff;
+    border-radius: 50%;
+    opacity: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.progress:hover .progress-bar,
+.progress.dragging .progress-bar {
+    background-color: #1ed760;
+}
+
+.progress::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 0;
+    right: 0;
+    bottom: -8px;
+    z-index: 5;
 }
 
 /* Стили для кнопок управления */
