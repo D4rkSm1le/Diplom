@@ -69,8 +69,4 @@ python manage.py runserver
 3. Начните добавлять треки и создавать плейлисты
 
 
-```
 
-## Лицензия
-
-MIT License 
