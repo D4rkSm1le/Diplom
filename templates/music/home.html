@@ -25,7 +25,7 @@
                         {% if tracks %}
                             <div class="list-group">
                                 {% for track in tracks %}
-                                    <div class="list-group-item list-group-item-action track-item" data-track-id="{{ track.pk }}">
+                                    <div class="list-group-item track-item" data-track-id="{{ track.pk }}">
                                         <div class="d-flex w-100 justify-content-between align-items-center" data-track-id="{{ track.pk }}">
                                             <div class="d-flex align-items-center">
                                                 <div class="me-3" style="width: 40px; text-align: center;">
@@ -46,11 +46,6 @@
                                                     <a href="{% url 'music:track_detail' track.pk %}" class="btn btn-sm btn-outline-primary">
                                                         <i class="fas fa-info-circle"></i>
                                                     </a>
-                                                    {% if user.is_authenticated %}
-                                                    <button class="btn btn-sm btn-outline-success add-to-playlist-btn" data-track-id="{{ track.pk }}">
-                                                        <i class="fas fa-plus"></i>
-                                                    </button>
-                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -102,63 +97,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const addToPlaylistButtons = document.querySelectorAll('.add-to-playlist-btn');
-    addToPlaylistButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const trackId = this.dataset.trackId;
-            showAddToPlaylistModal(trackId);
-        });
-    });
-    
-    // Обработчик для клика по треку в списке
-    const trackItems = document.querySelectorAll('.list-group-item');
-    trackItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            // Если клик был по кнопке добавления в плейлист или другим кнопкам, не перенаправляем
-            if (e.target.closest('.add-to-playlist-btn') || e.target.closest('.btn-outline-primary')) {
-                return;
-            }
-            
-            const trackId = this.querySelector('[data-track-id]').dataset.trackId;
-            
-            // Отправляем запрос на увеличение счетчика прослушиваний
-            fetch(`/music/track/${trackId}/increment-play-count/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("Успешно увеличен счетчик:", data);
-                
-                if (data.success) {
-                    // Обновляем счетчик прослушиваний на странице
-                    const playCountElement = this.querySelector('.badge');
-                    if (playCountElement) {
-                        playCountElement.innerHTML = `<i class="fas fa-play"></i> ${data.play_count}`;
-                    }
-                    
-                    // Перенаправляем на страницу деталей трека
-                    window.location.href = `/music/tracks/${trackId}/`;
-                }
-            })
-            .catch(error => {
-                console.error("Ошибка при увеличении счетчика:", error);
-                // В случае ошибки все равно перенаправляем на страницу трека
-                window.location.href = `/music/tracks/${trackId}/`;
-            });
-            
-            e.preventDefault();
-        });
-    });
+    // Инициализация других обработчиков событий, если они нужны
 });
-
-function showAddToPlaylistModal(trackId) {
-    // Здесь должна быть логика открытия модального окна для добавления в плейлист
-    // Этот код будет работать, если у вас уже есть соответствующий модальный компонент
-}
 
 function getCookie(name) {
     let cookieValue = null;
